@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 56% 90%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 60 56% 93%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 60 56% 90%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 51 100% 50%;
+    --primary-foreground: 51 100% 10%;
+    --secondary: 60 40% 85%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 60 40% 85%;
+    --muted-foreground: 222.2 84% 25%;
+    --accent: 0 100% 25%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 60 30% 80%;
+    --input: 60 30% 85%;
+    --ring: 51 100% 50%;
+    --chart-1: 51 100% 50%;
+    --chart-2: 0 100% 25%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 51 100% 50%;
+    --primary-foreground: 51 100% 10%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 0 100% 35%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 51 100% 50%;
+    --chart-1: 51 100% 50%;
+    --chart-2: 0 100% 35%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Compact datetime input without native picker icon to avoid visual clutter near thumbnails */
+input.no-picker::-webkit-calendar-picker-indicator { display: none; }
+input.no-picker::-webkit-clear-button { display: none; }
+input.no-picker::-webkit-inner-spin-button { display: none; }
+input.no-picker { -moz-appearance: textfield; }

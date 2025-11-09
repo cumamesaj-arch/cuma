@@ -1,0 +1,32 @@
+[
+  {
+    "categoryId": "1",
+    "visible": true,
+    "order": 1
+  },
+  {
+    "categoryId": "2",
+    "visible": true,
+    "order": 2
+  },
+  {
+    "categoryId": "3",
+    "visible": true,
+    "order": 3
+  },
+  {
+    "categoryId": "4",
+    "visible": true,
+    "order": 4
+  },
+  {
+    "categoryId": "5",
+    "visible": true,
+    "order": 5
+  },
+  {
+    "categoryId": "6",
+    "visible": true,
+    "order": 6
+  }
+]

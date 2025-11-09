@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Media klasörü - okuma herkese açık, yazma authenticated kullanıcılar için
+    match /media/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Uploads klasörü - sadece authenticated kullanıcılar
+    match /uploads/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+

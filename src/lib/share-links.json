@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Facebook",
+    "active": true
+  },
+  {
+    "name": "Twitter",
+    "active": true
+  },
+  {
+    "name": "WhatsApp",
+    "active": true
+  },
+  {
+    "name": "Pinterest",
+    "active": true
+  },
+  {
+    "name": "LinkedIn",
+    "active": true
+  },
+  {
+    "name": "Bip",
+    "active": true
+  },
+  {
+    "name": "Email",
+    "active": true
+  },
+  {
+    "name": "NextSosyal",
+    "active": true
+  }
+]

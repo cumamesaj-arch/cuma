@@ -1,0 +1,22 @@
+[
+  {
+    "id": "user-1",
+    "name": "Admin",
+    "email": "cumamesaj@gmail.com",
+    "role": "admin",
+    "active": true,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "password": "b2d2c3e58530378d5cced3ab4cc17155:2631cab2c10d6709936b8dbcc4a4b35160ec805fcea420f6d0fe387074e8d543bbfa03b0d9a701583a2c175c824abcb75a7e077968539cb26f7c8fd423e0e4b9"
+  },
+  {
+    "id": "user-1762457289960",
+    "name": "Yasemin",
+    "email": "tugaycicek@gmail.com",
+    "role": "viewer",
+    "password": "66974dc6e4711b3f83dbb643d76742c3:420bddb0294fa84fe70706a239f6db761b3d17430b82768f0b3df10b7178b6731ed6f265f60caf9585a7f0a1e903525aaa4f7c72843612fc5b3703e972ee9058",
+    "active": true,
+    "createdAt": "2025-11-06T19:28:09.960Z"
+  }
+]
+
+
