@@ -22,6 +22,9 @@ buildConfig:
   
   # Environment variables (build sırasında kullanılır)
   env:
+    # Node.js heap size artırımı (büyük dosyalar için)
+    - variable: NODE_OPTIONS
+      value: --max-old-space-size=4096
     # Firebase Configuration
     - variable: NEXT_PUBLIC_FIREBASE_API_KEY
       value: AIzaSyB_YePigrW7TjzzXhrtoaimFktrlji8lRE
