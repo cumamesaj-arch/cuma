@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true, // Görselleri optimize etme - direkt dosya yolu kullan (static export için gerekli)
+    // App Hosting için image optimization aktif
     remotePatterns: [
       {
         protocol: 'https',
