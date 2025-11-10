@@ -5,7 +5,6 @@ export type ImagePlaceholder = {
   imageHint: string;
 };
 
-// Import from TypeScript file instead of JSON to avoid Turbopack HMR warnings
-import { placeholderImagesData } from './placeholder-images-data';
-
-export const PlaceHolderImages: ImagePlaceholder[] = placeholderImagesData.placeholderImages || [];
+// Placeholder images data removed due to large file size (91.56 MB)
+// Using empty array - images should be loaded from Firebase Storage or external sources
+export const PlaceHolderImages: ImagePlaceholder[] = [];
