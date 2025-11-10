@@ -63,3 +63,4 @@ Proje ID'sini aldıktan sonra:
 - Firebase config değerlerini kopyalayın
 - Proje ID'sini not edin
 
+

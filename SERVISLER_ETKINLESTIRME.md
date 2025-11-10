@@ -79,3 +79,4 @@
 - App Hosting server-side rendering destekler (404 hatası çözülür)
 - Static Hosting sadece static dosyalar için uygundur
 
+

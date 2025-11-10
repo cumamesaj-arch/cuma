@@ -52,3 +52,4 @@ Değerleri aldıktan sonra:
 **Sizden istediğim:** Firebase Console'dan 6 değeri kopyalayıp bana vermeniz.
 **Ben yapacağım:** Dosyayı oluşturup deploy edeceğim.
 
+

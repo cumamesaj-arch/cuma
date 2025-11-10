@@ -34,3 +34,4 @@ echo.
 echo ✅ Server başlatılıyor: http://localhost:9002
 call npm run dev
 
+

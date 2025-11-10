@@ -44,20 +44,22 @@ export const POSTS: Post[] = [
     youtubeVideoId: 'ZWzBJ88PnlA',
     createdAt: '2025-11-06T22:39:03.704Z'
   },
+  
   {
     id: 'post-1762452178870-357092',
-    title: '1913290388795074.jpg',
-    slug: '1913290388795074jpg',
-    category: 'fotograflar',
+    title: 'bakara suresi',
+    slug: 'bakara-suresi',
+    category: 'cuma-mesajlari',
     imageIds: ['new-1762252979453-20'],
     imageId: 'new-1762252979453-20',
     content: {
-      meal: ``,
+      meal: `hfghfghgfhfghfghfg`,
       mealleri: '',
       tefsir: '',
       kisaTefsir: '',
     },
-    createdAt: '2025-11-06T15:00:00.000Z'
+    createdAt: '2025-11-06T15:00:00.000Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN"
   },
   
   

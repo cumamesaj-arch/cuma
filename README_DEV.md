@@ -59,3 +59,4 @@ NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 - `.env.local` dosyası git'e commit edilmez (güvenlik)
 - `env.example` dosyasından template kopyalayabilirsiniz
 
+

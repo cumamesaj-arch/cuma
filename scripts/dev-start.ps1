@@ -41,3 +41,4 @@ if (-not (Test-Path "node_modules")) {
 Write-Host "`n✅ Server başlatılıyor: http://localhost:$port" -ForegroundColor Green
 npm run dev
 
+

@@ -62,3 +62,4 @@ firebase deploy --only hosting
 - Environment variables build sırasında Next.js tarafından bundle'a dahil edilir
 - Firebase Hosting static hosting olduğu için runtime environment variables kullanılamaz
 
+

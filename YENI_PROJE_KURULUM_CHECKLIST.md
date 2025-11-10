@@ -348,3 +348,4 @@ Tüm adımlar tamamlandığında:
 - [ ] Deploy başarılı
 - [ ] Site çalışıyor
 
+

@@ -129,3 +129,4 @@ Config değerlerini aldıktan sonra:
 
 Config değerlerini aldıktan sonra devam edeceğiz!
 
+

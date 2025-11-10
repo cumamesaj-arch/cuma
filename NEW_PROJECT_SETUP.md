@@ -65,3 +65,4 @@ firebase use yeni-proje-id
 firebase deploy --only hosting
 ```
 
+
