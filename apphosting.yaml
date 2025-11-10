@@ -1,26 +1,40 @@
-# Settings to manage and configure a Firebase App Hosting backend.
+# Firebase App Hosting Configuration
 # https://firebase.google.com/docs/app-hosting/configure
+# Firebase Studio için optimize edilmiş yapılandırma
 
+# Runtime configuration
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
+  # Maksimum instance sayısı (trafik artışına göre otomatik ölçeklendirme)
   maxInstances: 1
-  
+  # Minimum instance sayısı (her zaman çalışan instance)
+  minInstances: 0
+
 # Build configuration
 buildConfig:
+  # Node.js runtime versiyonu
   runtime: nodejs20
-  # Next.js için gerekli build komutu
+  
+  # Build komutu (Next.js için)
   buildCommand: npm run build
-  # Output klasörü
+  
+  # Build çıktı klasörü (Next.js standart çıktı klasörü)
   outputDirectory: .next
 
 # Environment variables
-# Firebase Studio Secrets Manager üzerinden yönetilir
-# Gerekli değişkenler:
-# - NEXT_PUBLIC_FIREBASE_API_KEY
-# - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-# - NEXT_PUBLIC_FIREBASE_PROJECT_ID
-# - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-# - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-# - NEXT_PUBLIC_FIREBASE_APP_ID
-# - GOOGLE_GENAI_API_KEY (Genkit için)
+# Firebase App Hosting environment variables
+env:
+  # Firebase Configuration
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyB_YePigrW7TjzzXhrtoaimFktrlji8lRE
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: cuma-mesajlari-dfc6c.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: cuma-mesajlari-dfc6c
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: cuma-mesajlari-dfc6c.firebasestorage.app
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "136445087189"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:136445087189:web:153086538227a86781015c
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-512SQLEGJC
