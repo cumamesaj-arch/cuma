@@ -2,6 +2,9 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20"
+  },
   "scripts": {
     "dev": "node scripts/kill-port.js 9002 && next dev --turbopack -p 9002",
     "dev:clean": "node scripts/kill-port.js 9002; npm run dev",
@@ -15,6 +18,9 @@
     "typecheck": "tsc --noEmit",
     "firebase:emulators": "firebase emulators:start",
     "firebase:deploy": "firebase deploy",
+    "firebase:deploy:hosting": "firebase deploy --only hosting",
+    "build:hosting": "next build && firebase deploy --only hosting",
+    "predeploy": "npm run build",
     "import:posts": "node scripts/import-posts.js",
     "import:media": "node scripts/bulk-import-media.js",
     "posts:from-media": "node scripts/posts-from-media.js"

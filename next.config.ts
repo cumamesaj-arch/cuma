@@ -2,6 +2,8 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Firebase App Hosting server-side rendering destekler, static export kaldırıldı
+  // output: 'export', // App Hosting için kaldırıldı
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -9,7 +11,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true, // Görselleri optimize etme - direkt dosya yolu kullan
+    unoptimized: true, // Görselleri optimize etme - direkt dosya yolu kullan (static export için gerekli)
     remotePatterns: [
       {
         protocol: 'https',
