@@ -3,6 +3,16 @@ import type { Metadata } from 'next';
 import { POSTS, CATEGORIES } from '@/lib/data';
 import PostClientPage from './client-page';
 
+export async function generateStaticParams() {
+  // Static export için tüm post'ları generate et
+  return POSTS
+    .filter(post => post.status !== 'draft')
+    .map(post => ({
+      category: post.category,
+      slug: post.slug,
+    }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = POSTS.find((p) => p.slug === slug);

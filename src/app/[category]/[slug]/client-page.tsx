@@ -10,6 +10,8 @@ import shareLinks from '@/lib/share-links.json';
 import type { SocialLink } from '@/lib/types';
 import type { Post } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { getPlaceholderImagesAction } from '@/app/actions';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -111,6 +113,11 @@ export default function PostClientPage({ post }: { post: Post }) {
   const [isZoomed, setIsZoomed] = React.useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [availableImages, setAvailableImages] = React.useState<ImagePlaceholder[]>(PlaceHolderImages);
+
+  React.useEffect(() => {
+    getPlaceholderImagesAction().then(setAvailableImages);
+  }, []);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -155,7 +162,7 @@ export default function PostClientPage({ post }: { post: Post }) {
   const category = CATEGORIES.find((c) => c.slug === post.category) || CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
   // Support both imageId and imageIds
   const primaryImageId = post.imageId || (post.imageIds && post.imageIds[0]);
-  const image = primaryImageId ? PlaceHolderImages.find((img) => img.id === primaryImageId) : undefined;
+  const image = primaryImageId ? availableImages.find((img) => img.id === primaryImageId) : undefined;
   const activeShareLinks = shareLinks.filter(link => link.active);
   const activeSocialLinks = socialLinks.filter(link => link.active);
 
@@ -177,7 +184,7 @@ export default function PostClientPage({ post }: { post: Post }) {
   
   // Get multiple images if available
   const postImages = post.imageIds && post.imageIds.length > 0
-    ? post.imageIds.map(id => PlaceHolderImages.find(img => img.id === id)).filter(Boolean) as typeof PlaceHolderImages
+    ? post.imageIds.map(id => availableImages.find(img => img.id === id)).filter(Boolean) as ImagePlaceholder[]
     : image ? [image] : [];
 
   // Klavye ile gezinme (sağ/sol ok)

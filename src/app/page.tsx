@@ -19,6 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import type { VisitorMessage } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { getPlaceholderImagesAction } from '@/app/actions';
 
 // Icon mapping
 const iconMap: { [key: string]: ComponentType<{ className?: string }> } = {
@@ -109,6 +111,7 @@ function VisitorMessageForm({ title, description }: { title?: string; descriptio
 export default function Home() {
   const [sections, setSections] = useState<HomepageSections>(homepageSectionsData);
   const [sectionsLoaded, setSectionsLoaded] = useState(true); // İlk render'da hemen göster, sonra güncelle
+  const [availableImages, setAvailableImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
   
   // Başlangıç state'lerini homepageSectionsData'dan al
   // Önce defaultDisplayMode'u kontrol et, yoksa butonların defaultSection'ını kullan
@@ -118,6 +121,11 @@ export default function Home() {
   const [randomPosts, setRandomPosts] = useState<typeof POSTS>([]);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [currentHeroImageIndex, setCurrentHeroImageIndex] = useState(0);
+
+  // Load images dynamically
+  useEffect(() => {
+    getPlaceholderImagesAction().then(setAvailableImages);
+  }, []);
 
   // Load homepage sections from JSON file (runtime) - slayt için gerekli
   useEffect(() => {
@@ -731,7 +739,7 @@ export default function Home() {
                             <div className="flex flex-col gap-4 mb-8">
                               {latestPosts.map((post) => {
                                 const imageId = post.imageId || (post.imageIds && post.imageIds[0]);
-                                const image = imageId ? PlaceHolderImages.find(img => img.id === imageId) : undefined;
+                                const image = imageId ? availableImages.find(img => img.id === imageId) : undefined;
                                 // Video gönderileri için küçük resim
                                 const videoId = (post as any).youtubeVideoId || ((post as any).youtubeVideoIds && (post as any).youtubeVideoIds[0]);
                                 const videoThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';

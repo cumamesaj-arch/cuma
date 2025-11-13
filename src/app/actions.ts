@@ -236,6 +236,17 @@ function escapeForSingleQuote(str: string): string {
 
 export async function createPostAction(postData: Post) {
     try {
+        // Log incoming post data
+        console.log('[CREATE POST ACTION] Received postData:', {
+            id: postData.id,
+            title: postData.title,
+            imageIds: postData.imageIds,
+            imageId: postData.imageId,
+            hasImageIds: !!postData.imageIds,
+            hasImageId: !!postData.imageId,
+            imageIdsLength: postData.imageIds?.length || 0,
+        });
+
         const filePath = path.join(process.cwd(), 'src/lib/data.ts');
         const fileContent = await fs.readFile(filePath, 'utf-8');
 
@@ -265,15 +276,23 @@ export async function createPostAction(postData: Post) {
         
         // Handle image IDs (support both legacy single imageId and new imageIds array)
         let imageIdPart = '';
+        console.log('[CREATE POST ACTION] Processing images - imageIds:', postData.imageIds, 'imageId:', postData.imageId);
+        
         if (postData.imageIds && postData.imageIds.length > 0) {
+          console.log('[CREATE POST ACTION] Using imageIds array, length:', postData.imageIds.length);
           const escapedImageIds = postData.imageIds.map(id => `'${escapeForSingleQuote(id)}'`).join(', ');
           imageIdPart = `\n    imageIds: [${escapedImageIds}],`;
           // Also add legacy imageId for backward compatibility if only one image
           if (postData.imageIds.length === 1) {
             imageIdPart += `\n    imageId: '${escapeForSingleQuote(postData.imageIds[0])}',`;
           }
+          console.log('[CREATE POST ACTION] Generated imageIdPart:', imageIdPart);
         } else if (postData.imageId) {
+          console.log('[CREATE POST ACTION] Using legacy imageId:', postData.imageId);
           imageIdPart = `\n    imageId: '${escapeForSingleQuote(postData.imageId)}',`;
+          console.log('[CREATE POST ACTION] Generated imageIdPart:', imageIdPart);
+        } else {
+          console.warn('[CREATE POST ACTION] WARNING: No images found in postData! imageIds:', postData.imageIds, 'imageId:', postData.imageId);
         }
         
         // Handle YouTube video IDs (support both legacy single youtubeVideoId and new youtubeVideoIds array)
@@ -333,9 +352,21 @@ export async function createPostAction(postData: Post) {
     createdAt: '${escapedCreatedAt}'${customMessagePart}${statusPart}${seoPart}
   },`;
 
+        console.log('[CREATE POST ACTION] Generated newPostString (first 500 chars):', newPostString.substring(0, 500));
+        console.log('[CREATE POST ACTION] ImageIdPart in string:', imageIdPart ? 'PRESENT' : 'MISSING');
+
         const newFileContent = fileContent.replace(postsRegex, `export const POSTS: Post[] = [${newPostString}`);
 
+        // Log final content to verify images are included
+        const imageCheckInFinal = newFileContent.includes('imageIds:') || newFileContent.includes('imageId:');
+        console.log('[CREATE POST ACTION] Final content includes image fields:', imageCheckInFinal);
+        if (!imageCheckInFinal && (postData.imageIds?.length > 0 || postData.imageId)) {
+          console.error('[CREATE POST ACTION] ERROR: Images were in postData but not in final content!');
+          console.log('[CREATE POST ACTION] Final content snippet around new post:', newFileContent.substring(match.index! + match[0].length, match.index! + match[0].length + 1000));
+        }
+
         await fs.writeFile(filePath, newFileContent, 'utf-8');
+        console.log('[CREATE POST ACTION] File written successfully');
 
         revalidatePath('/');
         revalidatePath('/[category]', 'layout');
@@ -356,6 +387,17 @@ export async function createPostAction(postData: Post) {
 // Update existing post by id (in-place replace)
 export async function updatePostAction(postData: Post) {
   try {
+    // Log incoming post data
+    console.log('[UPDATE POST ACTION] Received postData:', {
+      id: postData.id,
+      title: postData.title,
+      imageIds: postData.imageIds,
+      imageId: postData.imageId,
+      hasImageIds: !!postData.imageIds,
+      hasImageId: !!postData.imageId,
+      imageIdsLength: postData.imageIds?.length || 0,
+    });
+
     const filePath = path.join(process.cwd(), 'src/lib/data.ts');
     const fileContent = await fs.readFile(filePath, 'utf-8');
 
@@ -378,14 +420,22 @@ export async function updatePostAction(postData: Post) {
     const escapedPostId = escapeForSingleQuote(postData.id);
 
     let imageIdPart = '';
+    console.log('[UPDATE POST ACTION] Processing images - imageIds:', postData.imageIds, 'imageId:', postData.imageId);
+    
     if (postData.imageIds && postData.imageIds.length > 0) {
+      console.log('[UPDATE POST ACTION] Using imageIds array, length:', postData.imageIds.length);
       const escapedImageIds = postData.imageIds.map(id => `'${escapeForSingleQuote(id)}'`).join(', ');
       imageIdPart = `\n    imageIds: [${escapedImageIds}],`;
       if (postData.imageIds.length === 1) {
         imageIdPart += `\n    imageId: '${escapeForSingleQuote(postData.imageIds[0])}',`;
       }
+      console.log('[UPDATE POST ACTION] Generated imageIdPart:', imageIdPart);
     } else if (postData.imageId) {
+      console.log('[UPDATE POST ACTION] Using legacy imageId:', postData.imageId);
       imageIdPart = `\n    imageId: '${escapeForSingleQuote(postData.imageId)}',`;
+      console.log('[UPDATE POST ACTION] Generated imageIdPart:', imageIdPart);
+    } else {
+      console.warn('[UPDATE POST ACTION] WARNING: No images found in postData! imageIds:', postData.imageIds, 'imageId:', postData.imageId);
     }
 
     let youtubeVideoIdPart = '';
@@ -416,6 +466,9 @@ export async function updatePostAction(postData: Post) {
     }
 
     const updatedPostString = `\n  {\n    id: '${escapedPostId}',\n    title: '${escapedTitle}',\n    slug: '${escapedSlug}',\n    category: '${escapedCategory}',${imageIdPart}\n    content: {\n      meal: \`${escapedMeal}\`,\n      mealleri: '${escapedMealleri}',\n      tefsir: '${escapedTefsir}',\n      kisaTefsir: '${escapedKisaTefsir}',\n    },${youtubeVideoIdPart}\n    createdAt: '${escapedCreatedAt}'${customMessagePart}${statusPart}${seoPart}\n  },`;
+
+    console.log('[UPDATE POST ACTION] Generated updatedPostString (first 500 chars):', updatedPostString.substring(0, 500));
+    console.log('[UPDATE POST ACTION] ImageIdPart in string:', imageIdPart ? 'PRESENT' : 'MISSING');
 
     // Find existing post by id and replace
     const idRegex = new RegExp(`id:\\s*['"]${escapedPostId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`);
@@ -448,7 +501,16 @@ export async function updatePostAction(postData: Post) {
     const newAfter = afterPosts.substring(0, start) + updatedPostString + afterPosts.substring(endWithComma);
     const finalContent = beforePosts + newAfter;
 
+    // Log final content to verify images are included
+    const imageCheckInFinal = finalContent.includes('imageIds:') || finalContent.includes('imageId:');
+    console.log('[UPDATE POST ACTION] Final content includes image fields:', imageCheckInFinal);
+    if (!imageCheckInFinal && (postData.imageIds?.length > 0 || postData.imageId)) {
+      console.error('[UPDATE POST ACTION] ERROR: Images were in postData but not in final content!');
+      console.log('[UPDATE POST ACTION] Final content snippet around post:', finalContent.substring(match.index! + match[0].length, match.index! + match[0].length + 1000));
+    }
+
     await fs.writeFile(filePath, finalContent, 'utf-8');
+    console.log('[UPDATE POST ACTION] File written successfully');
 
     revalidatePath('/');
     revalidatePath('/[category]', 'layout');

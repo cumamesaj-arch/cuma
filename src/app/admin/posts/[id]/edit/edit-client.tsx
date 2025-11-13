@@ -2,15 +2,16 @@
 
 import Link from "next/link"
 import * as React from "react"
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
+  ChevronRight,
   Upload,
   Plus,
   X,
-  Trash2,
   Check,
 } from "lucide-react"
-import { useRouter } from "next/navigation";
+import { POSTS, CATEGORIES } from "@/lib/data"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CATEGORIES } from "@/lib/data"
 import { Checkbox } from "@/components/ui/checkbox"
 import Image from "next/image"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,63 +38,84 @@ import { useToast } from "@/hooks/use-toast"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import type { Post } from "@/lib/types";
-import { createPostAction, getCategorySettingsAction, getCustomMenusAction, generateSEOKeywordsAction, getPlaceholderImagesAction, uploadPlaceholderFilesAction } from "@/app/actions";
+import { updatePostAction, getCategorySettingsAction, getCustomMenusAction, generateSEOKeywordsAction, getPlaceholderImagesAction } from "@/app/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CategorySettings, CustomMenu } from "@/lib/types";
-
 
 function slugify(text: string) {
   return text
     .toString()
     .toLowerCase()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 function extractYouTubeVideoId(url: string): string {
   if (!url) return '';
   
-  // https://www.youtube.com/watch?v=VIDEO_ID
   const match1 = url.match(/[?&]v=([^&]+)/);
   if (match1) return match1[1];
   
-  // https://youtu.be/VIDEO_ID
   const match2 = url.match(/youtu\.be\/([^?]+)/);
   if (match2) return match2[1];
   
-  // https://www.youtube.com/embed/VIDEO_ID
   const match3 = url.match(/embed\/([^?]+)/);
   if (match3) return match3[1];
   
   return '';
 }
 
+interface EditPostPageClientProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
 
-export default function NewPostPage() {
-  const [title, setTitle] = React.useState("");
-  const [category, setCategory] = React.useState("cuma-mesajlari");
-  const [selectedImages, setSelectedImages] = React.useState<string[]>([]); // Array of image IDs
-  const [youtubeVideoUrls, setYoutubeVideoUrls] = React.useState<string[]>(['']); // Array of YouTube URLs
+export default function EditPostPageClient({ params }: EditPostPageClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { id } = React.use(params);
+  const post = POSTS.find(p => p.id === id);
+  
+  // Find previous and next posts
+  const currentIndex = POSTS.findIndex(p => p.id === id);
+  const previousPost = currentIndex > 0 ? POSTS[currentIndex - 1] : null;
+  const nextPost = currentIndex < POSTS.length - 1 ? POSTS[currentIndex + 1] : null;
+
+  // Initialize all states with default values first
+  const [title, setTitle] = React.useState(post?.title || '');
+  const [category, setCategory] = React.useState(post?.category || '');
+  // Support multiple selected images (fallback to legacy single imageId)
+  const initialImageIds: string[] = post
+    ? (post.imageIds && post.imageIds.length > 0
+        ? post.imageIds
+        : (post.imageId ? [post.imageId] : []))
+    : [];
+  const [selectedImages, setSelectedImages] = React.useState<string[]>(initialImageIds);
+  const [meal, setMeal] = React.useState(post?.content.meal || '');
+  const [mealleriUrl, setMealleriUrl] = React.useState(post?.content.mealleri || '');
+  const [tefsirUrl, setTefsirUrl] = React.useState(post?.content.tefsir || '');
+  const [kisaTefsirUrl, setKisaTefsirUrl] = React.useState(post?.content.kisaTefsir || '');
+  const [youtubeUrl, setYoutubeUrl] = React.useState(
+    post?.youtubeVideoId ? `https://www.youtube.com/watch?v=${post.youtubeVideoId}` : ''
+  );
+  
   const [isPending, startTransition] = React.useTransition();
   const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
   const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
   const [availableImages, setAvailableImages] = React.useState<typeof PlaceHolderImages>(PlaceHolderImages);
   const [isImageDialogOpen, setIsImageDialogOpen] = React.useState(false);
-  const [isUploadingImages, setIsUploadingImages] = React.useState(false);
-  const [meal, setMeal] = React.useState("");
   const socialPlatforms = ["Facebook", "X", "Instagram", "Pinterest", "YouTube", "WhatsApp"];
-  const { toast } = useToast();
-  const router = useRouter();
 
   // SEO states
-  const [metaTitle, setMetaTitle] = React.useState("");
-  const [metaDescription, setMetaDescription] = React.useState("");
-  const [keywords, setKeywords] = React.useState<string[]>([]);
+  const [metaTitle, setMetaTitle] = React.useState(post?.seo?.metaTitle || "");
+  const [metaDescription, setMetaDescription] = React.useState(post?.seo?.metaDescription || "");
+  const [keywords, setKeywords] = React.useState<string[]>(post?.seo?.keywords || []);
   const [keywordInput, setKeywordInput] = React.useState("");
-  const [ogImage, setOgImage] = React.useState("");
+  const [ogImage, setOgImage] = React.useState(post?.seo?.ogImage || "");
   const [isGeneratingSEO, setIsGeneratingSEO] = React.useState(false);
 
   React.useEffect(() => {
@@ -110,22 +131,6 @@ export default function NewPostPage() {
     }
   }, [isImageDialogOpen]);
 
-  const handleUploadImages = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setIsUploadingImages(true);
-    try {
-      const fd = new FormData();
-      Array.from(files).forEach(f => fd.append('files', f));
-      const res = await uploadPlaceholderFilesAction(fd);
-      if (res.success && res.images) {
-        setAvailableImages(prev => [...res.images!, ...prev]);
-        setSelectedImages(prev => [...res.images!.map(i => i.id), ...prev]);
-      }
-    } finally {
-      setIsUploadingImages(false);
-    }
-  };
-
   // Check if selected category should hide meal/tefsir fields
   // Hide for: "Diğer" (diger), "Videolar" subcategories, "Fotograflar" (custom menu)
   const shouldHideMealFields = React.useMemo(() => {
@@ -139,7 +144,6 @@ export default function NewPostPage() {
     }
     
     // Check if it's Fotograflar (custom menu)
-    // Custom menus have href like "/Fotograflar", we need to check if category matches
     const normalizedCategory = category.startsWith('/') ? category.slice(1) : category;
     const fotoMenu = customMenus.find(menu => {
       const menuHref = menu.href.startsWith('/') ? menu.href.slice(1) : menu.href;
@@ -161,6 +165,7 @@ export default function NewPostPage() {
   };
 
   // Filter and sort categories based on visibility and order settings from Menü Ayarları
+  // Always include the current post's category even if it's hidden
   const visibleCategories = CATEGORIES.map(cat => {
     const setting = getCategorySetting(cat.id);
     return {
@@ -169,8 +174,14 @@ export default function NewPostPage() {
       order: setting?.order ?? 0
     };
   })
-    .filter(cat => cat.visible)
-    .sort((a, b) => a.order - b.order); // Sort by order from Menü Ayarları
+    .filter(cat => cat.visible || cat.slug === post?.category)
+    .sort((a, b) => {
+      // If one is the current post's category, prioritize it
+      if (a.slug === post?.category) return -1;
+      if (b.slug === post?.category) return 1;
+      // Otherwise sort by order from Menü Ayarları
+      return a.order - b.order;
+    });
 
   // Get visible custom menus and sort by order
   const visibleCustomMenus = customMenus
@@ -197,6 +208,9 @@ export default function NewPostPage() {
       subcategories: undefined
     }))
   ].sort((a, b) => {
+    // If current post's category, prioritize it
+    if (a.displaySlug === post?.category) return -1;
+    if (b.displaySlug === post?.category) return 1;
     // Sort categories first (by their order), then custom menus (by their order)
     if (a.type === 'category' && b.type === 'custom') return -1;
     if (a.type === 'custom' && b.type === 'category') return 1;
@@ -210,23 +224,34 @@ export default function NewPostPage() {
     return aOrder - bOrder;
   });
 
-  // Update default category if current one is not visible
   React.useEffect(() => {
-    if (allMenuItems.length > 0) {
-      const currentCategoryExists = allMenuItems.some(item => 
-        item.displaySlug === category || (item.subcategories && item.subcategories.some(sub => sub.slug === category))
-      );
-      if (!currentCategoryExists) {
-        // Set to first available visible menu item
-        const firstItem = allMenuItems[0];
-        if (firstItem.subcategories && firstItem.subcategories.length > 0) {
-          setCategory(firstItem.subcategories[0].slug);
-        } else {
-          setCategory(firstItem.displaySlug);
-        }
-      }
+    if (!post) {
+      toast({
+        variant: "destructive",
+        title: "Gönderi Bulunamadı!",
+        description: "Düzenlemek istediğiniz gönderi bulunamadı.",
+      });
+      router.push('/admin/posts');
+    } else {
+      // Update states when post is found
+      setTitle(post.title);
+      setCategory(post.category);
+      const imageIds = post.imageIds && post.imageIds.length > 0
+        ? post.imageIds
+        : (post.imageId ? [post.imageId] : []);
+      setSelectedImages(imageIds);
+      setMeal(post.content.meal);
+      setMealleriUrl(post.content.mealleri || '');
+      setTefsirUrl(post.content.tefsir || '');
+      setKisaTefsirUrl(post.content.kisaTefsir || '');
+      setYoutubeUrl(post.youtubeVideoId ? `https://www.youtube.com/watch?v=${post.youtubeVideoId}` : '');
+      // Update SEO fields
+      setMetaTitle(post.seo?.metaTitle || "");
+      setMetaDescription(post.seo?.metaDescription || "");
+      setKeywords(post.seo?.keywords || []);
+      setOgImage(post.seo?.ogImage || "");
     }
-  }, [allMenuItems, category]);
+  }, [post, router, toast]);
 
   // Auto-generate SEO keywords
   const handleGenerateSEO = async () => {
@@ -295,17 +320,20 @@ export default function NewPostPage() {
     setKeywords(keywords.filter(k => k !== keyword));
   };
 
+  if (!post) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-muted-foreground">Gönderi yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const titleValue = formData.get("title") as string;
-    const mealValue = formData.get("meal") as string || '';
-    const mealleriUrl = formData.get("mealleri_url") as string || '';
-    const tefsirUrl = formData.get("tefsir_url") as string || '';
-    const kisaTefsirUrl = formData.get("kisa_tefsir_url") as string || '';
     
-    // Basic validation: title and category are always required
-    if (!titleValue || !category) {
+    if (!title || !category) {
       toast({
         variant: "destructive",
         title: "Eksik Bilgi!",
@@ -314,8 +342,8 @@ export default function NewPostPage() {
       return;
     }
 
-    // Meal is only required if meal fields are visible
-    if (!shouldHideMealFields && !mealValue) {
+    // For non-meal categories, meal is optional
+    if (!shouldHideMealFields && !meal) {
       toast({
         variant: "destructive",
         title: "Eksik Bilgi!",
@@ -323,34 +351,22 @@ export default function NewPostPage() {
       });
       return;
     }
-
-    // Extract YouTube video IDs from URLs
-    const youtubeVideoIds = youtubeVideoUrls
-      .map(url => extractYouTubeVideoId(url))
-      .filter(id => id !== '');
-
-    // Log selected images before creating newPost
-    console.log('[NEW POST PAGE] Selected images before save:', selectedImages);
-    console.log('[NEW POST PAGE] Selected images length:', selectedImages.length);
-    console.log('[NEW POST PAGE] Available images count:', availableImages.length);
-
-    // Prepare post data
-    const newPost: Post = {
-        id: `post-${Date.now()}`,
-        title: titleValue,
-        slug: slugify(titleValue),
+    
+    const updatedPost: Post = {
+        id: post.id, // Keep original ID
+        title: title,
+        slug: slugify(title),
         category: category,
         ...(selectedImages.length > 0 && { imageIds: selectedImages }),
-        ...(selectedImages.length === 1 && { imageId: selectedImages[0] }), // Legacy support
+        ...(selectedImages.length === 1 && { imageId: selectedImages[0] }),
         content: {
-            meal: shouldHideMealFields ? '' : mealValue,
+            meal: shouldHideMealFields ? '' : meal,
             mealleri: shouldHideMealFields ? '' : mealleriUrl,
             tefsir: shouldHideMealFields ? '' : tefsirUrl,
             kisaTefsir: shouldHideMealFields ? '' : kisaTefsirUrl,
         },
-        ...(youtubeVideoIds.length > 0 && { youtubeVideoIds: youtubeVideoIds }),
-        ...(youtubeVideoIds.length === 1 && { youtubeVideoId: youtubeVideoIds[0] }), // Legacy support
-        createdAt: new Date().toISOString(),
+        youtubeVideoId: extractYouTubeVideoId(youtubeUrl),
+        createdAt: post.createdAt, // Keep original creation date
         ...(category === 'cuma-mesajlari' && { customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN" }),
         ...((metaTitle || metaDescription || keywords.length > 0 || ogImage) && {
             seo: {
@@ -362,45 +378,28 @@ export default function NewPostPage() {
         })
     };
 
-    // Log newPost to see what's being sent
-    console.log('[NEW POST PAGE] New post object:', {
-        id: newPost.id,
-        title: newPost.title,
-        imageIds: newPost.imageIds,
-        imageId: newPost.imageId,
-        hasImageIds: !!newPost.imageIds,
-        hasImageId: !!newPost.imageId,
-    });
-
     startTransition(async () => {
         try {
-            console.log('[NEW POST PAGE] Calling createPostAction with:', {
-                imageIds: newPost.imageIds,
-                imageId: newPost.imageId,
-            });
-            const result = await createPostAction(newPost);
-            console.log('[NEW POST PAGE] createPostAction result:', result);
+            const result = await updatePostAction(updatedPost);
             if (result.success) {
-                console.log('[NEW POST PAGE] Post created successfully!');
                 toast({
-                    title: "Gönderi Kaydedildi!",
-                    description: `${newPost.title} başlıklı gönderiniz başarıyla oluşturuldu.`,
+                    title: "Gönderi Güncellendi!",
+                    description: `${updatedPost.title} başlıklı gönderiniz başarıyla güncellendi. Değişiklikler tüm sayfalarda güncellendi.`,
                 });
-                router.push('/admin/posts');
+                // Refresh all pages to show changes
+                router.refresh();
             } else {
-                console.error('[NEW POST PAGE] Post creation failed:', result.error);
                 toast({
                     variant: "destructive",
-                    title: "Kaydetme Başarısız!",
-                    description: result.error || "Gönderi oluşturulurken bir hata oluştu.",
+                    title: "Güncelleme Başarısız!",
+                    description: result.error || "Gönderi güncellenirken bir hata oluştu.",
                 });
             }
         } catch (error) {
-            console.error('[NEW POST PAGE] Error in startTransition:', error);
             toast({
                 variant: "destructive",
-                title: "Hata!",
-                description: error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu.",
+                title: "Güncelleme Başarısız!",
+                description: "Gönderi güncellenirken bir hata oluştu.",
             });
         }
     });
@@ -416,17 +415,50 @@ export default function NewPostPage() {
           </Link>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-          Yeni Gönderi Oluştur
+          Gönderiyi Düzenle
         </h1>
-        <Badge variant="outline" className="ml-auto sm:ml-0">
-          Yayında
+        <Badge 
+          variant="outline" 
+          className={`ml-auto sm:ml-0 ${
+            (post.status || 'published') === 'draft' 
+              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700' 
+              : 'bg-green-600 text-white border-green-600 hover:bg-green-700'
+          }`}
+        >
+          {(post.status || 'published') === 'draft' ? 'Yayında Değil' : 'Yayında'}
         </Badge>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
+          {previousPost && (
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => {
+                router.push(`/admin/posts/${previousPost.id}/edit`);
+              }}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Önceki
+            </Button>
+          )}
+          {nextPost && (
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => {
+                router.push(`/admin/posts/${nextPost.id}/edit`);
+              }}
+            >
+              Sonraki
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/posts')}>
             Vazgeç
           </Button>
           <Button size="sm" type="submit" disabled={isPending}>
-            {isPending ? 'Kaydediliyor...' : 'Kaydet'}
+            {isPending ? 'Güncelleniyor...' : 'Güncelle'}
           </Button>
         </div>
       </div>
@@ -436,13 +468,12 @@ export default function NewPostPage() {
             <CardHeader>
               <CardTitle>Gönderi Detayları</CardTitle>
               <CardDescription>
-                Gönderinizin başlığını, içeriğini ve diğer detaylarını girin.
+                Gönderinizin başlığını, içeriğini ve diğer detaylarını güncelleyin.
               </CardDescription>
             </CardHeader>
             <CardContent>
              {isPending ? (
                 <div className="grid gap-6">
-                    <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-10 w-full" />
@@ -452,28 +483,6 @@ export default function NewPostPage() {
                 </div>
              ) : (
               <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="category">Gönderi Kategorisi</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger id="category" aria-label="Kategori Seç">
-                      <SelectValue placeholder="Kategori Seç" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allMenuItems.map(item => (
-                        item.subcategories ? (
-                            <React.Fragment key={item.id}>
-                                <SelectItem value={item.displaySlug} disabled>{item.displayTitle}</SelectItem>
-                                {item.subcategories.map(sub => (
-                                     <SelectItem key={sub.id} value={sub.slug}>&nbsp;&nbsp;&nbsp;{sub.title}</SelectItem>
-                                ))}
-                            </React.Fragment>
-                        ) : (
-                             <SelectItem key={item.id} value={item.displaySlug}>{item.displayTitle}</SelectItem>
-                        )
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="grid gap-3">
                   <Label htmlFor="name">Başlık</Label>
                   <Input
@@ -505,6 +514,8 @@ export default function NewPostPage() {
                         name="mealleri_url"
                         type="url"
                         placeholder="URL girin..."
+                        value={mealleriUrl}
+                        onChange={(e) => setMealleriUrl(e.target.value)}
                       />
                     </div>
                     <div className="grid gap-3">
@@ -514,6 +525,8 @@ export default function NewPostPage() {
                         name="tefsir_url"
                         type="url"
                         placeholder="URL girin..."
+                        value={tefsirUrl}
+                        onChange={(e) => setTefsirUrl(e.target.value)}
                       />
                     </div>
                     <div className="grid gap-3">
@@ -523,53 +536,23 @@ export default function NewPostPage() {
                         name="kisa_tefsir_url"
                         type="url"
                         placeholder="URL girin..."
+                        value={kisaTefsirUrl}
+                        onChange={(e) => setKisaTefsirUrl(e.target.value)}
                       />
                     </div>
                   </>
                 )}
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="youtube_url_0">YouTube Video Linkleri</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setYoutubeVideoUrls([...youtubeVideoUrls, ''])}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Link Ekle
-                    </Button>
-                  </div>
-                  {youtubeVideoUrls.map((url, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <Input
-                        id={`youtube_url_${index}`}
-                        name={`youtube_url_${index}`}
-                        type="url"
-                        value={url}
-                        onChange={(e) => {
-                          const newUrls = [...youtubeVideoUrls];
-                          newUrls[index] = e.target.value;
-                          setYoutubeVideoUrls(newUrls);
-                        }}
-                        className="flex-1"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                      />
-                      {youtubeVideoUrls.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            const newUrls = youtubeVideoUrls.filter((_, i) => i !== index);
-                            setYoutubeVideoUrls(newUrls);
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                  <Label htmlFor="youtube-link">YouTube Video Linki</Label>
+                  <Input
+                    id="youtube-link"
+                    name="youtube_url"
+                    type="url"
+                    className="w-full"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                  />
                 </div>
               </div>
               )}
@@ -671,7 +654,7 @@ export default function NewPostPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+           <Card>
                 <CardHeader>
                   <CardTitle>Paylaşılacak Sosyal Medya Platformları</CardTitle>
                 </CardHeader>
@@ -697,41 +680,97 @@ export default function NewPostPage() {
             </Card>
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gönderi Kategorisi</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="category">Klasör (Menü)</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger id="category" aria-label="Kategori Seç">
+                      <SelectValue placeholder="Kategori Seç" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allMenuItems.map(item => (
+                        item.subcategories ? (
+                            <React.Fragment key={item.id}>
+                                <SelectItem value={item.displaySlug} disabled>{item.displayTitle}</SelectItem>
+                                {item.subcategories.map(sub => (
+                                     <SelectItem key={sub.id} value={sub.slug}>&nbsp;&nbsp;&nbsp;{sub.title}</SelectItem>
+                                ))}
+                            </React.Fragment>
+                        ) : (
+                             <SelectItem key={item.id} value={item.displaySlug}>{item.displayTitle}</SelectItem>
+                        )
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="overflow-hidden">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Görseller</CardTitle>
-                  <CardDescription>
-                    Gönderi için bir veya birden fazla görsel seçin.
-                  </CardDescription>
-                </div>
+              <CardTitle>Görseller</CardTitle>
+              <CardDescription>
+                Gönderi için bir veya birden fazla görsel seçin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2">
+                {selectedImages.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground text-sm">
+                    Henüz görsel seçilmedi
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {selectedImages.map((imageId) => {
+                      const image = availableImages.find(img => img.id === imageId);
+                      if (!image) return null;
+                      return (
+                        <div key={imageId} className="relative group">
+                          <Image
+                            alt={image.description}
+                            className="aspect-square w-full rounded-md object-cover max-w-md mx-auto"
+                            height={300}
+                            src={image.imageUrl}
+                            width={300}
+                            data-ai-hint={image.imageHint}
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 h-7 w-7 inline-flex items-center justify-center rounded-md bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => setSelectedImages(prev => prev.filter(id => id !== imageId))}
+                            aria-label="Görseli kaldır"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button type="button" variant="outline" size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Görsel Ekle
+                    <Button variant="outline" className="w-full">
+                       <Upload className="mr-2 h-4 w-4" />
+                       Görsel Ekle
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl">
                     <DialogHeader>
                       <DialogTitle>Medya Galerisi</DialogTitle>
                     </DialogHeader>
-                    <div className="p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Input type="file" accept="image/*" multiple onChange={(e) => handleUploadImages(e.target.files)} />
-                        {isUploadingImages && <span className="text-sm text-muted-foreground">Yükleniyor…</span>}
-                      </div>
-                    </div>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[60vh] overflow-y-auto p-4">
                       {availableImages.map(image => (
                         <button
                           key={image.id}
                           type="button"
                           onClick={() => {
-                            if (!selectedImages.includes(image.id)) {
-                              setSelectedImages([...selectedImages, image.id]);
-                            }
+                            setSelectedImages(prev => prev.includes(image.id) ? prev : [...prev, image.id]);
                           }}
                           className={`group relative focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md border-2 ${
                             selectedImages.includes(image.id) ? 'border-primary' : 'border-transparent'
@@ -764,73 +803,54 @@ export default function NewPostPage() {
                     </div>
                     <div className="flex justify-end gap-2">
                       <DialogClose asChild>
-                        <Button type="button">
-                          Tamam
-                        </Button>
+                        <Button type="button">Tamam</Button>
                       </DialogClose>
                       <DialogClose asChild>
-                        <Button type="button" variant="outline">
-                          Kapat
-                        </Button>
+                        <Button type="button" variant="outline">Kapat</Button>
                       </DialogClose>
                     </div>
                   </DialogContent>
                 </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {selectedImages.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Upload className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Henüz görsel seçilmedi</p>
-                    <p className="text-sm">Yukarıdaki "Görsel Ekle" butonuna tıklayarak görsel seçin</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedImages.map((imageId) => {
-                      const image = availableImages.find(img => img.id === imageId);
-                      if (!image) return null;
-                      return (
-                        <div key={imageId} className="relative group">
-                          <Image
-                            alt={image.description}
-                            className="aspect-square w-full rounded-md object-cover"
-                            height={150}
-                            src={image.imageUrl}
-                            width={150}
-                            data-ai-hint={image.imageHint}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              setSelectedImages(selectedImages.filter(id => id !== imageId));
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <input type="hidden" name={`imageIds[]`} value={imageId} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
       <div className="flex items-center justify-center gap-2 md:hidden">
+        {previousPost && (
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => {
+              router.push(`/admin/posts/${previousPost.id}/edit`);
+            }}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Önceki
+          </Button>
+        )}
+        {nextPost && (
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => {
+              router.push(`/admin/posts/${nextPost.id}/edit`);
+            }}
+          >
+            Sonraki
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        )}
         <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/posts')}>
           Vazgeç
         </Button>
         <Button size="sm" type="submit" disabled={isPending}>
-            {isPending ? 'Kaydediliyor...' : 'Kaydet'}
+            {isPending ? 'Güncelleniyor...' : 'Güncelle'}
         </Button>
       </div>
     </form>
   )
 }
+

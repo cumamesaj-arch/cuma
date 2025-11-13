@@ -30,6 +30,96 @@ export const CATEGORIES: Category[] = [
 
 export const POSTS: Post[] = [
   {
+    id: 'post-1763067343653',
+    title: 'deneme4',
+    slug: 'deneme4',
+    category: 'cuma-mesajlari',
+    imageIds: ['upload-1763067333669-128771', 'new-1763022846441-0'],
+    content: {
+      meal: `deneme4`,
+      mealleri: 'https://www.kuranmeali.com/AyetKarsilastirma.php?sure=29&ayet=1',
+      tefsir: 'https://kuran.diyanet.gov.tr/tefsir/Ankeb%C3%BBt-suresi/3341/1-ayet-tefsiri',
+      kisaTefsir: 'https://kuranimecid.com/index.php?sure=29&ayet=1',
+    },
+    createdAt: '2025-11-13T20:55:43.653Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN"
+  },
+  {
+    id: 'post-1763067062456',
+    title: 'deneme3',
+    slug: 'deneme3',
+    category: 'cuma-mesajlari',
+    imageIds: ['upload-1763066922431-994930', 'new-1763022846441-0', 'upload-1763066421933-68384', 'upload-1763022498929-417517'],
+    content: {
+      meal: `deneme3`,
+      mealleri: 'https://www.kuranmeali.com/AyetKarsilastirma.php?sure=29&ayet=1',
+      tefsir: 'https://kuran.diyanet.gov.tr/tefsir/Cuma-suresi/5186/9-11-ayet-tefsiri',
+      kisaTefsir: 'https://kuranimecid.com/index.php?sure=36&ayet=83',
+    },
+    createdAt: '2025-11-13T20:51:02.456Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN"
+  },
+  {
+    id: 'post-1763066794589',
+    title: 'deneme2',
+    slug: 'deneme2',
+    category: 'cuma-mesajlari',
+    imageIds: ['upload-1763066421933-68384', 'new-1762552291663-0'],
+    content: {
+      meal: `deneme2`,
+      mealleri: 'https://www.kuranmeali.com/AyetKarsilastirma.php?sure=29&ayet=1',
+      tefsir: 'https://kuran.diyanet.gov.tr/tefsir/Ankeb%C3%BBt-suresi/3341/1-ayet-tefsiri',
+      kisaTefsir: 'https://kuranimecid.com/index.php?sure=29&ayet=1',
+    },
+    createdAt: '2025-11-13T20:46:34.589Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN"
+  },
+  {
+    id: 'post-1763066490678',
+    title: 'deneme',
+    slug: 'deneme',
+    category: 'cuma-mesajlari',
+    imageIds: ['upload-1763066421933-68384'],
+    imageId: 'upload-1763066421933-68384',
+    content: {
+      meal: `deneme`,
+      mealleri: 'https://www.kuranmeali.com/AyetKarsilastirma.php?sure=29&ayet=1',
+      tefsir: 'https://kuran.diyanet.gov.tr/tefsir/Y%C3%A2s%C3%AEn-suresi/3788/83-ayet-tefsiri',
+      kisaTefsir: 'https://kuranimecid.com/index.php?sure=36&ayet=83',
+    },
+    youtubeVideoIds: ['h6sZR1P35-o'],
+    youtubeVideoId: 'h6sZR1P35-o',
+    createdAt: '2025-11-13T20:41:30.679Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN"
+  },
+  
+  
+  
+  
+  {
+    id: 'post-1763022537321',
+    title: 'Mücâdele Suresi 10. Ayet',
+    slug: 'mcdele-suresi-10-ayet',
+    category: 'cuma-mesajlari',
+    imageIds: ['new-1763022846441-0'],
+    imageId: 'new-1763022846441-0',
+    content: {
+      meal: `O kötü fısıltılar iman edenleri üzmek için ancak şeytandan kaynaklanmaktadır. Oysa şeytan, Allah’ın izni olmadıkça, mü’minlere hiçbir zarar verebilecek değildir. Öyle ise mü’minler ancak Allah’a tevekkül etsinler.`,
+      mealleri: 'https://www.kuranmeali.com/AyetKarsilastirma.php?sure=58&ayet=10',
+      tefsir: 'https://kuran.diyanet.gov.tr/tefsir/M%C3%BCc%C3%A2dele-suresi/5114/10-ayet-tefsiri',
+      kisaTefsir: 'https://kuranimecid.com/index.php?sure=58&ayet=10',
+    },
+    youtubeVideoId: 'h6sZR1P35-o',
+    createdAt: '2025-11-13T08:28:57.321Z',
+    customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN",
+    seo: {
+      metaTitle: 'Mücadele Suresi 10: Şeytanın Vesvesesi ve Allah\'a Tevekkül',
+      metaDescription: 'Mücadele Suresi 10. Ayet, şeytanın fısıltılarının iman edenlere zarar veremeyeceğini vurguluyor. Allah\'a tevekkülün önemini keşfedin ve vesveselerden korunun. Cuma mesajları için ideal!',
+      keywords: ['Mücadele Suresi 10. Ayet', 'Mücadele Suresi', 'Tevekkül nedir', 'Şeytanın vesvesesi', 'Allah\'a güvenmek', 'Cuma mesajları anlamlı', 'İslami öğütler', 'Kuran ayetleri', 'Faith in Islam', 'Trust in Allah', 'Satan\'s whispers', 'Islamic teachings', 'İman güçlendirme', 'İslamda tevekkül'],
+      
+    }
+  },
+  {
     id: 'post-1762468743704',
     title: 'Hafız Yunus Balcıoğlu Enfal 20-28',
     slug: 'hafz-yunus-balcolu-enfal-20-28',

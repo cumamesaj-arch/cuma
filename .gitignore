@@ -43,3 +43,7 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# Large placeholder files (causing heap out of memory during build)
+src/lib/placeholder-images-data.ts
+src/lib/placeholder-images.json

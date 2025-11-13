@@ -22,18 +22,29 @@ export function DynamicAnalytics() {
     // Load analytics config from homepage sections
     (async () => {
       try {
+        console.log('[DynamicAnalytics] Fetching /api/homepage-sections');
         const res = await fetch('/api/homepage-sections');
+        console.log('[DynamicAnalytics] Response status:', res.status, res.ok);
         if (res.ok) {
           const data = await res.json();
+          console.log('[DynamicAnalytics] Received data, has analytics:', !!data?.analytics);
           if (data?.analytics) {
+            console.log('[DynamicAnalytics] Analytics config:', {
+              googleAnalytics: data.analytics.googleAnalytics,
+              yandexMetrica: data.analytics.yandexMetrica,
+            });
             setAnalyticsConfig({
               googleAnalytics: data.analytics.googleAnalytics,
               yandexMetrica: data.analytics.yandexMetrica,
             });
+          } else {
+            console.warn('[DynamicAnalytics] No analytics object in response');
           }
+        } else {
+          console.error('[DynamicAnalytics] Failed to fetch homepage sections:', res.status, res.statusText);
         }
       } catch (e) {
-        // ignore
+        console.error('[DynamicAnalytics] Error fetching homepage sections:', e);
       }
     })();
   }, []);

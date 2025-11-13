@@ -54,6 +54,7 @@ import {
 import * as React from "react";
 import { POSTS, CATEGORIES } from "@/lib/data"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import type { ImagePlaceholder } from "@/lib/placeholder-images"
 import { 
   getDeletedPostsAction, 
   restorePostAction, 
@@ -63,7 +64,8 @@ import {
   updatePostAction,
   updatePostOrderAction,
   swapPostDatesAction,
-  emptyDeletedPostsAction
+  emptyDeletedPostsAction,
+  getPlaceholderImagesAction
 } from "@/app/actions";
 import { getCategorySettingsAction, getCustomMenusAction } from "@/app/actions";
 import initialCustomMenus from "@/lib/custom-menus.json";
@@ -99,6 +101,7 @@ export default function AdminPostsPage() {
   const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>(() => {
     try { return (initialCustomMenus as unknown as CustomMenu[]).slice().sort((a,b)=>a.order-b.order); } catch { return []; }
   });
+  const [availableImages, setAvailableImages] = React.useState<ImagePlaceholder[]>(PlaceHolderImages);
   const [searchQuery, setSearchQuery] = React.useState('');
   // Pagination: 50 items per page
   const pageSize = 50;
@@ -280,6 +283,7 @@ export default function AdminPostsPage() {
     getDeletedPostsAction().then(setDeletedPosts);
     getCategorySettingsAction().then(setCategorySettings);
     getCustomMenusAction().then(setCustomMenus);
+    getPlaceholderImagesAction().then(setAvailableImages);
   }, []);
 
   const handleRestore = (postId: string) => {
@@ -545,7 +549,7 @@ export default function AdminPostsPage() {
                 {(showAll ? filteredPosts : pagedPosts).map((post, idx) => {
                      const rowNumber = startIndex + idx + 1;
                      const primaryImageId = post.imageId || (post.imageIds && post.imageIds.length > 0 ? post.imageIds[0] : undefined);
-                     const image = primaryImageId ? PlaceHolderImages.find(img => img.id === primaryImageId) : undefined;
+                     const image = primaryImageId ? availableImages.find(img => img.id === primaryImageId) : undefined;
                      
                      // Find category by slug (check both original and custom slugs)
                      let category = CATEGORIES.find(c => c.slug === post.category) || 
@@ -1020,7 +1024,7 @@ export default function AdminPostsPage() {
               <TableBody>
                 {filteredPosts.filter(post => !post.status || post.status === 'published').map(post => {
                      const primaryImageId = post.imageId || (post.imageIds && post.imageIds.length > 0 ? post.imageIds[0] : undefined);
-                     const image = primaryImageId ? PlaceHolderImages.find(img => img.id === primaryImageId) : undefined;
+                     const image = primaryImageId ? availableImages.find(img => img.id === primaryImageId) : undefined;
                      const category = CATEGORIES.find(c => c.slug === post.category) || CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
                     return (
                         <TableRow key={post.id}>
@@ -1390,7 +1394,7 @@ export default function AdminPostsPage() {
               <TableBody>
                 {filteredPosts.filter(post => post.status === 'draft').map(post => {
                      const primaryImageId = post.imageId || (post.imageIds && post.imageIds.length > 0 ? post.imageIds[0] : undefined);
-                     const image = primaryImageId ? PlaceHolderImages.find(img => img.id === primaryImageId) : undefined;
+                     const image = primaryImageId ? availableImages.find(img => img.id === primaryImageId) : undefined;
                      
                      // Find category by slug (check both original and custom slugs)
                      let category = CATEGORIES.find(c => c.slug === post.category) || 

@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -5,17 +7,26 @@ import { Badge } from '@/components/ui/badge';
 import type { Post } from '@/lib/types';
 import { CATEGORIES } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { getPlaceholderImagesAction } from '@/app/actions';
 import { ArrowUpRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface PostCardProps {
   post: Post;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const [availableImages, setAvailableImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+  
+  useEffect(() => {
+    getPlaceholderImagesAction().then(setAvailableImages);
+  }, []);
+
   const category = CATEGORIES.find((c) => c.slug === post.category) || (CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category));
   // Resolve primary image from post images
   const primaryImageId = post.imageId || (post.imageIds && post.imageIds[0]) || undefined;
-  const image = primaryImageId ? PlaceHolderImages.find((img) => img.id === primaryImageId) : undefined;
+  const image = primaryImageId ? availableImages.find((img) => img.id === primaryImageId) : undefined;
   const imageUrl = image?.imageUrl; // only real image url
   const hasImage = !!imageUrl;
   // Determine YouTube video id if present
