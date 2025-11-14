@@ -106,7 +106,7 @@ export async function getAllPostsAction(): Promise<Post[]> {
     return JSON.parse(JSON.stringify(posts));
   } catch (error) {
     console.error('Error getting all posts:', error);
-    return [];
+            return [];
   }
 }
 
@@ -170,7 +170,7 @@ export async function uploadPlaceholderFilesAction(formData: FormData): Promise<
     });
     
     const processedImages = await Promise.all(filePromises);
-    
+
     // Firebase'e kaydet
     const saved = await createImages(processedImages);
 
@@ -931,10 +931,10 @@ export async function updateCategorySettingsAction(categoryId: string, updates: 
     }
 
     const updateData: Partial<Omit<CategorySettings, 'categoryId'>> = {
-      ...updates,
-      ...(typeof nextOrder === 'number' ? { order: nextOrder } : {}),
+        ...updates,
+        ...(typeof nextOrder === 'number' ? { order: nextOrder } : {}),
     };
-
+    
     // Firebase'de kategori ayarını güncelle
     await updateCategorySetting(categoryId, updateData);
     
@@ -1166,7 +1166,7 @@ export async function loginAction(email: string, password: string): Promise<{
   try {
     // Firebase'den email ile kullanıcıyı getir (şifre dahil)
     let user = await getUserByEmail(email.toLowerCase(), true);
-    
+
     // If user not found, create a new viewer user automatically
     if (!user) {
       // Hash the password
@@ -1551,7 +1551,7 @@ export async function createNoteAction(noteData: Omit<Note, 'id' | 'createdAt' |
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    
+
     revalidatePath('/admin/notes');
     
     return { success: true, note: createdNote };
@@ -1569,7 +1569,7 @@ export async function updateNoteAction(note: Note): Promise<{ success: boolean; 
       ...updates,
       updatedAt: new Date().toISOString(),
     });
-    
+
     revalidatePath('/admin/notes');
     
     return { success: true, note: updatedNote };

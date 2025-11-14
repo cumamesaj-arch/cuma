@@ -26,8 +26,8 @@ function initializeFirebaseAdmin() {
 
   // Önce environment variables'dan al
   let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
-  let projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  let clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL;
   
   if (!privateKey && process.env.NODE_ENV === 'development') {
     console.warn('⚠️  FIREBASE_ADMIN_PRIVATE_KEY bulunamadı. Lütfen .env.local dosyasına ekleyin!');
