@@ -1229,6 +1229,39 @@ export async function loginAction(email: string, password: string): Promise<{
   }
 }
 
+// Reset password action
+export async function resetPasswordAction(email: string, newPassword: string): Promise<{ 
+  success: boolean; 
+  error?: string;
+}> {
+  try {
+    // Firebase'den email ile kullanıcıyı getir
+    const user = await getUserByEmail(email.toLowerCase(), false);
+    
+    if (!user) {
+      return { success: false, error: 'Bu email adresine kayıtlı kullanıcı bulunamadı.' };
+    }
+    
+    // Check if user is inactive
+    if (!user.active) {
+      return { success: false, error: 'Bu kullanıcı hesabı pasif durumda.' };
+    }
+    
+    // Yeni şifreyi hash'le ve güncelle
+    const hashedPassword = hashPassword(newPassword);
+    await updateUser(user.id, { password: hashedPassword });
+    
+    revalidatePath('/admin/login');
+    return { success: true };
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: 'Şifre sıfırlanırken bir hata oluştu.' };
+  }
+}
+
 // Get all users
 export async function getUsersAction(): Promise<User[]> {
   try {
