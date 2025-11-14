@@ -6,7 +6,7 @@
     "node": "20"
   },
   "scripts": {
-    "dev": "node scripts/kill-port.js 9002 && next dev --turbopack -p 9002",
+    "dev": "node scripts/kill-port.js 9002 && next dev -p 9002",
     "dev:clean": "node scripts/kill-port.js 9002; npm run dev",
     "dev:start": "powershell -ExecutionPolicy Bypass -File scripts/dev-start.ps1",
     "dev:studio": "next dev --turbopack --port $PORT --hostname 0.0.0.0",
