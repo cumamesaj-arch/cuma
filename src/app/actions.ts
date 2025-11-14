@@ -1239,14 +1239,19 @@ export async function requestPasswordResetAction(email: string): Promise<{
     const user = await getUserByEmail(email.toLowerCase(), false);
     
     if (!user) {
-      // Güvenlik için: Kullanıcı yoksa da başarılı mesajı göster (email enumeration saldırısını önler)
-      return { success: true };
+      // Kullanıcı bulunamadı - email gönderme
+      return { 
+        success: false, 
+        error: 'Bu email adresine kayıtlı kullanıcı bulunamadı.' 
+      };
     }
     
     // Check if user is inactive
     if (!user.active) {
-      // Güvenlik için: Pasif kullanıcı için de başarılı mesajı göster
-      return { success: true };
+      return { 
+        success: false, 
+        error: 'Bu kullanıcı hesabı pasif durumda. Lütfen sistem yöneticisine başvurun.' 
+      };
     }
     
     // Güvenli token oluştur
