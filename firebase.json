@@ -50,7 +50,7 @@
   },
   "apphosting": {
     "backendId": "cuma",
-    "rootDir": ".",
+    "rootDir": "project",
     "ignore": [
       "node_modules",
       ".git",

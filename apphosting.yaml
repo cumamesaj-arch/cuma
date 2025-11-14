@@ -43,12 +43,9 @@ buildConfig:
       value: G-512SQLEGJC
     
     # Firebase Admin SDK Configuration (Server-side)
-    # NOT: Bu değerleri Firebase Console > App Hosting > Backend > Environment'tan da ekleyebilirsiniz
     - variable: FIREBASE_ADMIN_PROJECT_ID
       value: cuma-mesajlari-dfc6c
     - variable: FIREBASE_ADMIN_CLIENT_EMAIL
-      availability: RUNTIME
-      secret: firebase-admin-client-email
+      value: firebase-adminsdk-fbsvc@cuma-mesajlari-dfc6c.iam.gserviceaccount.com
     - variable: FIREBASE_ADMIN_PRIVATE_KEY
-      availability: RUNTIME
-      secret: firebase-admin-private-key
+      value: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCeZSXj9Z274Z0t\nmyDn+GwMnVAuUZ4+2PywOaART3lY/4PGfjhSuS+EA6tFgCZ1sihEu+nQ/ovStl19\n6z4hHduIBJ2pzSiKnCmz6EYtub0SZDwrcGizqluELcm7DL8yrsf/eqQhf67V6iDr\nuHjeBhmTFm6ExZqPCnCEaJy8HRR2kM2pKXxzFZu8tVEV+eGIhx42xfugdPvzoKt9\nq22dKvnXKLgzXTISLA1a0Cu6JslqwaEcJF4/MF6AhhrbahmAWU5IqdI5xT/1Ij+g\n727RP002ZW0L3GRGZre6ykW5dA6Cb/8QoISW4XuO7kHhskGdECEGIK8XGtoBP4PN\nBxUXqVbjAgMBAAECggEAGkFGN77m9OrPrMIUgRmmq1aeIPdgGtHJMjAdw2YgMADh\nPRMp+d2pWHa/5TF57oi9RQYS7+oUOjVb/OXJSCBUsHtMuQXWjQHtUF1q2I8mSHil\n7UYLjOXAQqzQ+KODGSnAjAKuVxZ84Adtiopq5SkvWbgI/L1rwlRm1IPUoG0qOawX\nMQ0zP+Id7o9oefL+Gn04dy/T0ZTr+Jz+G7I5fqGQ76bPWzIh5Sydh+72cbiy2n9L\ne+k9AazECpLxjMe0JnbHmU0qrkab89WJXnCiwCNKQ+aI7XrVymyG0C5tSeTBcC5H\nAZcNJVFv81HOAa9dssNCkTeu3yPqrKOg7Okwlw4lXQKBgQDKEmOZ9O2dIxWgteTi\ncgqOVGiCs6zDwxRYU29iZllQpyTK0FHXxzPNYZDM+AhU/dfcPZkCh/QLhHb4OF7J\nlds+0ckMoexpHTCYvhRX0/fuy6YqMjxWnv1fvlVoq8AnU+6rsatcTtoZVoI/zeyM\nngvxQqGH4lsQGMyaiZ/TbH0fNQKBgQDIqsBlB7GYmVE4uxcYs1BRdN0Cv4aqdK+P\n+eemYRE2aKVsjVhpNO1yraoBMopfeIQPJOMemIXcPGv7XvHSyf4ouZ4/7sxbEKvT\nSuwvsBR4BE2ZYDMlJ6E+hLFoqnlCaRvBm3s20BObp/oLMYv+NliYfq6v9YPgeJQW\nI79rnDDotwKBgQC7lIh7MX+mIByCnHeFsgGUkEyYD/yvmRb4yzMZsBL3KMGht/JR\nkSzIWeqWKyVo6F+Kpm+0hsoIKwZZc9Kh5QeqcAnnPST9ishC8ihmQ3HjbY6pmwqi\nCmMAjuowCUeN+n8TSRHe1Z/mZ4Tvf9Q30LsbUhQq1Phdn/fG+TyxggNAhQKBgQDF\nWdlaA1UQpUiSKL4wVroZQnvSJhcFMTkwujCvGyvYfNakieZ3ocwdStq1zsTz3AzU\n8AxGnO6ZiPsR/3CJRIsn9lXCvtJQhXbXmQnsZJnc5y6CN3BVjEIywEHSlEYpoEHi\nCU4GvGFsZqmttI7f9wbvAzg+aZHHhA7wLzwlUzluxQKBgDZ3UNpUcmqdIDjsO5bb\nOj2GO0oWaKslgv74pUCVAifEShXjViKLhLjJRkqK5W3vofe/DHUbKQ6Mhh/W47R/\nuMUhjDalXUO2dJIF6LCoIrb9Skbjnma+p1zwB/SURtIQfsVD8+u3R/LYFq/oxbCF\npRaDYYGPNjRxRmOAEznth2+9\n-----END PRIVATE KEY-----\n"
