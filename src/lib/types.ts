@@ -51,6 +51,7 @@ export interface ShareLink {
 
 export interface Comment {
   id: string;
+  postId?: string; // Hangi gönderiye ait (opsiyonel, genel yorumlar için)
   author: string;
   text: string;
   createdAt: string;

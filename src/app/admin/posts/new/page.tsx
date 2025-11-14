@@ -103,7 +103,12 @@ export default function NewPostPage() {
     getCustomMenusAction().then(setCustomMenus);
   }, []);
 
-  // Load images when dialog opens
+  // Load images immediately on page load to prevent delay
+  React.useEffect(() => {
+    getPlaceholderImagesAction().then(setAvailableImages);
+  }, []);
+
+  // Refresh images when dialog opens (optional, for latest images)
   React.useEffect(() => {
     if (isImageDialogOpen) {
       getPlaceholderImagesAction().then(setAvailableImages);

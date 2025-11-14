@@ -17,7 +17,8 @@ import {
   BarChart3,
   Share2,
   Mail,
-  StickyNote
+  StickyNote,
+  LogOut
 } from 'lucide-react';
 import {
   Tooltip,
@@ -106,7 +107,6 @@ export function AdminSidebar() {
             ))}
           </nav>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-            <NavLink href="/admin/notes" icon={StickyNote} label="Notlarım" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
@@ -118,6 +118,27 @@ export function AdminSidebar() {
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right">Ayarlar</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('isAdmin');
+                      sessionStorage.removeItem('isAdmin');
+                      localStorage.removeItem('adminUser');
+                      // Clear cookie
+                      document.cookie = 'isAdmin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                      window.location.href = '/admin/login';
+                    }
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive md:h-8 md:w-8"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="sr-only">Çıkış Yap</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Çıkış Yap</TooltipContent>
             </Tooltip>
           </nav>
         </TooltipProvider>
@@ -148,19 +169,28 @@ export function AdminSidebar() {
                 </Link>
               ))}
               <Link
-                  href="/admin/notes"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <StickyNote className="h-5 w-5" />
-                  Notlarım
-                </Link>
-              <Link
                   href="/admin/settings"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                   <Settings className="h-5 w-5" />
                   Ayarlar
                 </Link>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    localStorage.removeItem('isAdmin');
+                    sessionStorage.removeItem('isAdmin');
+                    localStorage.removeItem('adminUser');
+                    // Clear cookie
+                    document.cookie = 'isAdmin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    window.location.href = '/admin/login';
+                  }
+                }}
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="h-5 w-5" />
+                Çıkış Yap
+              </button>
             </nav>
           </SheetContent>
         </Sheet>

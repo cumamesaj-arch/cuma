@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Facebook, Instagram, MessageCircle, Youtube } from 'lucide-react';
 import type { SocialLink } from '@/lib/types';
+import { getSocialLinksAction } from '@/app/actions';
 
 const PinterestIcon = (props: { className?: string }) => (
   <svg
@@ -80,19 +81,10 @@ export function SocialIcons({ className, iconSize = 'h-6 w-6' }: SocialIconsProp
   const [socialLinks, setSocialLinks] = React.useState<SocialLink[]>([]);
 
   React.useEffect(() => {
-    const loadSocialLinks = async () => {
-      try {
-        const response = await fetch('/api/social-links');
-        if (response.ok) {
-          const links = await response.json();
-          setSocialLinks(links);
-        }
-      } catch (error) {
-        console.error('Failed to load social links:', error);
-      }
-    };
-
-    loadSocialLinks();
+    // Firebase'den sosyal medya linklerini yükle
+    getSocialLinksAction().then(setSocialLinks).catch(error => {
+      console.error('Failed to load social links:', error);
+    });
   }, []);
 
   return (

@@ -29,15 +29,13 @@ export function Logo() {
   };
 
   useEffect(() => {
-    // Load branding from API
+    // Firebase'den branding bilgilerini yükle
     const loadBranding = async () => {
       try {
-        const response = await fetch('/api/homepage-sections');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.branding) {
-            setBranding(data.branding);
-          }
+        const { getHomepageSectionsAction } = await import('@/app/actions');
+        const data = await getHomepageSectionsAction();
+        if (data.branding) {
+          setBranding(data.branding);
         }
       } catch (error) {
         console.error('Failed to load branding:', error);

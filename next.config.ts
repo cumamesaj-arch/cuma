@@ -2,16 +2,43 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  // Firebase Hosting için static export gerekli
-  output: 'export',
+  // Firebase App Hosting kullanıyoruz (Server Actions destekler)
+  // output: 'export', // Static export kaldırıldı
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config, { isServer }) => {
+    // Firebase Admin SDK'yı sadece server-side'da kullan
+    if (!isServer) {
+      // Client-side'da Firebase Admin SDK'yı external yap
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'firebase-admin': false,
+        'firebase-admin/firestore': false,
+        'firebase-admin/app': false,
+        'firebase-admin/auth': false,
+      };
+      
+      // Node.js modüllerini client-side'da external yap
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        http2: false,
+        child_process: false,
+        'agent-base': false,
+        'https-proxy-agent': false,
+      };
+    }
+    return config;
+  },
   images: {
     // App Hosting için image optimization aktif
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',

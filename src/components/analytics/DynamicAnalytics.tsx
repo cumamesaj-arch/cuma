@@ -19,29 +19,16 @@ export function DynamicAnalytics() {
   const [analyticsConfig, setAnalyticsConfig] = useState<AnalyticsConfig | null>(null);
 
   useEffect(() => {
-    // Load analytics config from homepage sections
+    // Firebase'den analytics config'i yükle
     (async () => {
       try {
-        console.log('[DynamicAnalytics] Fetching /api/homepage-sections');
-        const res = await fetch('/api/homepage-sections');
-        console.log('[DynamicAnalytics] Response status:', res.status, res.ok);
-        if (res.ok) {
-          const data = await res.json();
-          console.log('[DynamicAnalytics] Received data, has analytics:', !!data?.analytics);
-          if (data?.analytics) {
-            console.log('[DynamicAnalytics] Analytics config:', {
-              googleAnalytics: data.analytics.googleAnalytics,
-              yandexMetrica: data.analytics.yandexMetrica,
-            });
-            setAnalyticsConfig({
-              googleAnalytics: data.analytics.googleAnalytics,
-              yandexMetrica: data.analytics.yandexMetrica,
-            });
-          } else {
-            console.warn('[DynamicAnalytics] No analytics object in response');
-          }
-        } else {
-          console.error('[DynamicAnalytics] Failed to fetch homepage sections:', res.status, res.statusText);
+        const { getHomepageSectionsAction } = await import('@/app/actions');
+        const data = await getHomepageSectionsAction();
+        if (data?.analytics) {
+          setAnalyticsConfig({
+            googleAnalytics: data.analytics.googleAnalytics,
+            yandexMetrica: data.analytics.yandexMetrica,
+          });
         }
       } catch (e) {
         console.error('[DynamicAnalytics] Error fetching homepage sections:', e);

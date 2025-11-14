@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { updateHomepageSectionsAction } from '@/app/actions';
-import { BookOpen, Bot, Layout, Eye, ZoomIn, ZoomOut, Move } from 'lucide-react';
+import { BookOpen, Bot, Layout, Eye, ZoomIn, ZoomOut, Move, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
@@ -28,9 +28,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { CategoriesSection } from './CategoriesSection';
-import { CATEGORIES } from '@/lib/data';
-import { getCategorySettingsAction, getCustomMenusAction } from '@/app/actions';
-import type { CategorySettings, CustomMenu } from '@/lib/types';
+import { getCategorySettingsAction, getCustomMenusAction, getCategoriesAction } from '@/app/actions';
+import type { CategorySettings, CustomMenu, Category } from '@/lib/types';
 
 const iconMap: { [key: string]: ComponentType<{ className?: string }> } = {
   BookOpen,
@@ -96,26 +95,26 @@ export default function HomepagePage() {
   const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
   const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
 
-  // Load latest persisted sections from API to avoid falling back to static defaults
+  // Load latest persisted sections from static JSON file (static export için)
   React.useEffect(() => {
     // Debug: PlaceHolderImages kontrolü
     console.log('PlaceHolderImages yüklendi:', PlaceHolderImages?.length || 0, 'görsel');
     
     (async () => {
       try {
-        const res = await fetch('/api/homepage-sections');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.hero && data.branding) {
-            // Migrate viewAllLink to viewAllLinks if needed
-            if (data.topSection?.viewAllLink && !data.topSection?.viewAllLinks) {
-              data.topSection.viewAllLinks = [data.topSection.viewAllLink];
-            }
-            setSections((prev) => ({ ...prev, ...data }));
+        // Firebase'den ana sayfa bölümlerini çek
+        const { getHomepageSectionsAction } = await import('@/app/actions');
+        const data = await getHomepageSectionsAction();
+        if (data && data.hero && data.branding) {
+          // Migrate viewAllLink to viewAllLinks if needed
+          if (data.topSection?.viewAllLink && !data.topSection?.viewAllLinks) {
+            data.topSection.viewAllLinks = [data.topSection.viewAllLink];
           }
+          setSections((prev) => ({ ...prev, ...data }));
         }
       } catch (e) {
         // ignore and keep current state
+        console.warn('Failed to load homepage sections from JSON:', e);
       }
     })();
     getCategorySettingsAction().then(setCategorySettings);
@@ -863,12 +862,11 @@ export default function HomepagePage() {
                                   hero:{
                                     ...prev.hero,
                                     page1Images: selected
-                                      ? (prev.hero.page1Images||[])
+                                      ? (prev.hero.page1Images||[]).filter(img => img.imageUrl !== image.imageUrl)
                                       : [ ...(prev.hero.page1Images||[]), { imageUrl: image.imageUrl, duration: 5000, objectPosition: 'center', zoom: 1, panX: 0, panY: 0 } ]
                                   }
                                 }))}
-                                disabled={selected}
-                                className={`group relative rounded-md border overflow-hidden aspect-video w-full ${selected ? 'opacity-50 cursor-not-allowed' : 'hover:ring-2 hover:ring-primary'}`}
+                                className={`group relative rounded-md border overflow-hidden aspect-video w-full ${selected ? 'ring-2 ring-primary' : 'hover:ring-2 hover:ring-primary'}`}
                               >
                                 <div className="relative w-full h-full">
                                   <Image 
@@ -878,7 +876,7 @@ export default function HomepagePage() {
                                     className="object-cover rounded-md" 
                                   />
                                 </div>
-                                {selected && <span className="absolute right-1 top-1 bg-muted text-muted-foreground text-xs px-1.5 py-0.5 rounded z-10">Kullanılıyor</span>}
+                                {selected && <span className="absolute right-1 top-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded z-10">Seçili</span>}
                               </button>
                             );
                           })}
@@ -913,6 +911,57 @@ export default function HomepagePage() {
                         >
                           <Image src={it.imageUrl} alt={`bg-${idx}`} fill className="object-cover" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (idx > 0) {
+                                setSections(prev => {
+                                  const newImages = [...(prev.hero.page1Images || [])];
+                                  [newImages[idx - 1], newImages[idx]] = [newImages[idx], newImages[idx - 1]];
+                                  return {
+                                    ...prev,
+                                    hero: {
+                                      ...prev.hero,
+                                      page1Images: newImages
+                                    }
+                                  };
+                                });
+                              }
+                            }}
+                            disabled={idx === 0}
+                            className="flex-1"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const images = sections.hero.page1Images || [];
+                              if (idx < images.length - 1) {
+                                setSections(prev => {
+                                  const newImages = [...(prev.hero.page1Images || [])];
+                                  [newImages[idx], newImages[idx + 1]] = [newImages[idx + 1], newImages[idx]];
+                                  return {
+                                    ...prev,
+                                    hero: {
+                                      ...prev.hero,
+                                      page1Images: newImages
+                                    }
+                                  };
+                                });
+                              }
+                            }}
+                            disabled={idx === (sections.hero.page1Images || []).length - 1}
+                            className="flex-1"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
                         </div>
                         <Dialog>
                           <DialogTrigger asChild>
@@ -983,6 +1032,26 @@ export default function HomepagePage() {
                             </div>
                           </DialogContent>
                         </Dialog>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            if (confirm(`Slayt ${idx + 1} görselini silmek istediğinize emin misiniz?`)) {
+                              setSections(prev => ({
+                                ...prev,
+                                hero: {
+                                  ...prev.hero,
+                                  page1Images: (prev.hero.page1Images || []).filter((_, i) => i !== idx)
+                                }
+                              }));
+                            }
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Slaytı Sil
+                        </Button>
                       </div>
                       <div className="flex-1 space-y-4">
                         <div className="space-y-3">

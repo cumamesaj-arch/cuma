@@ -1,16 +1,58 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
   useEffect(() => {
-    // Admin panelindeyken flag'i set et
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('isAdmin', 'true');
-      sessionStorage.setItem('isAdmin', 'true');
-    }
-  }, []);
+    // Check authentication
+    const checkAuth = () => {
+      try {
+        const ls = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
+        const ss = typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true';
+        const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
+        const isAuth = Boolean(ls || ss || cookie);
+        
+        setIsAuthenticated(isAuth);
+        
+        // If not authenticated and not on login page, redirect to login
+        if (!isAuth && pathname !== '/admin/login') {
+          router.push('/admin/login');
+        }
+      } catch {
+        setIsAuthenticated(false);
+        if (pathname !== '/admin/login') {
+          router.push('/admin/login');
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [router, pathname]);
+
+  // Show nothing while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-muted-foreground">Yükleniyor...</div>
+      </div>
+    );
+  }
+
+  // If on login page, don't show sidebar
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  // If not authenticated, show nothing (redirect will happen)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">

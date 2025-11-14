@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { POSTS, CATEGORIES } from '@/lib/data';
+import { getPostsData, getCategoriesData } from '@/lib/data';
+import { getPostBySlug } from '@/lib/firestore';
 import PostClientPage from './client-page';
 
 export async function generateStaticParams() {
-  // Static export için tüm post'ları generate et
-  return POSTS
+  // Firebase'den tüm published post'ları getir
+  const posts = await getPostsData();
+  return posts
     .filter(post => post.status !== 'draft')
     .map(post => ({
       category: post.category,
@@ -15,7 +17,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = POSTS.find((p) => p.slug === slug);
+  const post = await getPostBySlug(slug);
 
   // Don't show metadata for draft posts
   if (!post || post.status === 'draft') {
@@ -24,8 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const category = CATEGORIES.find(c => c.slug === post.category) || 
-                    CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
+  const categories = await getCategoriesData();
+  const category = categories.find(c => c.slug === post.category) || 
+                    categories.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
   
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mujdeportal.com';
   const postUrl = `${siteUrl}/${post.category}/${post.slug}`;
@@ -69,7 +72,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = POSTS.find((p) => p.slug === slug);
+  const post = await getPostBySlug(slug);
 
   // Don't show draft posts - return 404
   if (!post || post.status === 'draft') {

@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/select"
 import * as React from "react";
 import { POSTS, CATEGORIES } from "@/lib/data"
-import { PlaceHolderImages } from "@/lib/placeholder-images"
 import type { ImagePlaceholder } from "@/lib/placeholder-images"
 import { 
   getDeletedPostsAction, 
@@ -64,12 +63,10 @@ import {
   updatePostAction,
   updatePostOrderAction,
   swapPostDatesAction,
-  emptyDeletedPostsAction,
-  getPlaceholderImagesAction
+  emptyDeletedPostsAction
 } from "@/app/actions";
+import { useImages } from "@/contexts/ImagesContext";
 import { getCategorySettingsAction, getCustomMenusAction } from "@/app/actions";
-import initialCustomMenus from "@/lib/custom-menus.json";
-import initialCategorySettings from "@/lib/category-settings.json";
 import type { CategorySettings, CustomMenu } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -95,13 +92,9 @@ export default function AdminPostsPage() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
-  const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>(() => {
-    try { return (initialCategorySettings as unknown as CategorySettings[]).slice().sort((a,b)=>a.order-b.order); } catch { return []; }
-  });
-  const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>(() => {
-    try { return (initialCustomMenus as unknown as CustomMenu[]).slice().sort((a,b)=>a.order-b.order); } catch { return []; }
-  });
-  const [availableImages, setAvailableImages] = React.useState<ImagePlaceholder[]>(PlaceHolderImages);
+  const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
+  const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
+  const { images: availableImages } = useImages();
   const [searchQuery, setSearchQuery] = React.useState('');
   // Pagination: 50 items per page
   const pageSize = 50;
@@ -114,6 +107,7 @@ export default function AdminPostsPage() {
   
   // Drag & drop state for reordering
   const [draggingPostId, setDraggingPostId] = React.useState<string | null>(null);
+
 
   // Export posts function
   const handleExportPosts = () => {
@@ -283,7 +277,6 @@ export default function AdminPostsPage() {
     getDeletedPostsAction().then(setDeletedPosts);
     getCategorySettingsAction().then(setCategorySettings);
     getCustomMenusAction().then(setCustomMenus);
-    getPlaceholderImagesAction().then(setAvailableImages);
   }, []);
 
   const handleRestore = (postId: string) => {
@@ -638,6 +631,8 @@ export default function AdminPostsPage() {
                                 width="48"
                                 data-ai-hint={image.imageHint}
                                 unoptimized={image.imageUrl.startsWith('/uploads/')}
+                                loading="eager"
+                                priority
                                 />}
                             </TableCell>
                             <TableCell className="font-medium max-w-[320px] truncate">
@@ -1047,6 +1042,8 @@ export default function AdminPostsPage() {
                                 width="48"
                                 data-ai-hint={image.imageHint}
                                 unoptimized={image.imageUrl.startsWith('/uploads/')}
+                                loading="eager"
+                                priority
                                 />}
                             </TableCell>
                             <TableCell className="font-medium max-w-[320px] truncate">
@@ -1448,6 +1445,8 @@ export default function AdminPostsPage() {
                                 width="48"
                                 data-ai-hint={image.imageHint}
                                 unoptimized={image.imageUrl.startsWith('/uploads/')}
+                                loading="eager"
+                                priority
                                 />}
                             </TableCell>
                             <TableCell className="font-medium max-w-[320px] truncate">

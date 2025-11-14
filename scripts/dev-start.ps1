@@ -42,3 +42,4 @@ Write-Host "`n✅ Server başlatılıyor: http://localhost:$port" -ForegroundCol
 npm run dev
 
 
+

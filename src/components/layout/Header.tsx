@@ -13,7 +13,6 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { CATEGORIES } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import {
   NavigationMenu,
@@ -26,10 +25,8 @@ import {
 } from '@/components/ui/navigation-menu';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SocialIcons } from '../shared/SocialIcons';
-import { getCustomMenusAction, getCategorySettingsAction } from '@/app/actions';
-import initialCustomMenus from '@/lib/custom-menus.json';
-import initialCategorySettings from '@/lib/category-settings.json';
-import type { CustomMenu, CategorySettings } from '@/lib/types';
+import { getCustomMenusAction, getCategorySettingsAction, getCategoriesAction } from '@/app/actions';
+import type { CustomMenu, CategorySettings, Category } from '@/lib/types';
 
 const ListItem = React.forwardRef<
   React.ElementRef<'a'>,
@@ -61,24 +58,21 @@ ListItem.displayName = 'ListItem';
 
 function DesktopNav() {
   const pathname = usePathname();
-  const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>(() => {
-    try {
-      return (initialCustomMenus as unknown as CustomMenu[]).slice().sort((a,b)=>a.order-b.order);
-    } catch {
-      return [];
-    }
-  });
-  const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>(() => {
-    try {
-      return (initialCategorySettings as unknown as CategorySettings[]).slice().sort((a,b)=>a.order-b.order);
-    } catch {
-      return [];
-    }
-  });
+  const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
+  const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
-    getCustomMenusAction().then(setCustomMenus);
-    getCategorySettingsAction().then(setCategorySettings);
+    // Firebase'den custom menus, category settings ve categories'i yükle
+    getCustomMenusAction().then(menus => {
+      setCustomMenus(menus.slice().sort((a, b) => a.order - b.order));
+    });
+    getCategorySettingsAction().then(settings => {
+      setCategorySettings(settings.slice().sort((a, b) => a.order - b.order));
+    });
+    getCategoriesAction().then(cats => {
+      setCategories(cats);
+    });
   }, []);
 
   const visibleCustomMenus = customMenus.filter(m => m.visible).sort((a, b) => a.order - b.order);
@@ -87,7 +81,7 @@ function DesktopNav() {
     return categorySettings.find(s => s.categoryId === categoryId);
   };
   
-  const visibleCategories = CATEGORIES.map(cat => {
+  const visibleCategories = categories.map(cat => {
     const setting = getCategorySetting(cat.id);
     return {
       ...cat,
@@ -165,10 +159,20 @@ function MobileNav() {
     }
   });
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
     getCustomMenusAction().then(setCustomMenus);
     getCategorySettingsAction().then(setCategorySettings);
+    getCategoriesAction().then(setCategories);
+    try {
+      const refFromAdmin = typeof document !== 'undefined' && document.referrer.includes('/admin');
+      const ls = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
+      const ss = typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true';
+      const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
+      setIsAdmin(Boolean(refFromAdmin || ls || ss || cookie));
+    } catch {}
   }, []);
 
   const visibleCustomMenus = customMenus.filter(m => m.visible).sort((a, b) => a.order - b.order);
@@ -177,7 +181,7 @@ function MobileNav() {
     return categorySettings.find(s => s.categoryId === categoryId);
   };
   
-  const visibleCategories = CATEGORIES.map(cat => {
+  const visibleCategories = categories.map(cat => {
     const setting = getCategorySetting(cat.id);
     return {
       ...cat,
@@ -261,12 +265,14 @@ function MobileNav() {
               {menu.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            Yönetim Paneli
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Yönetim Paneli
+            </Link>
+          )}
         </nav>
       </SheetContent>
     </Sheet>
@@ -277,6 +283,17 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      const refFromAdmin = typeof document !== 'undefined' && document.referrer.includes('/admin');
+      const ls = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
+      const ss = typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true';
+      const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
+      setIsAdmin(Boolean(refFromAdmin || ls || ss || cookie));
+    } catch {}
+  }, []);
 
   if (pathname.startsWith('/admin')) {
     return null;
@@ -330,12 +347,14 @@ export function Header() {
               onKeyDown={handleInputKeyDown}
             />
           </form>
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin">
-              <UserCog className="h-5 w-5" />
-              <span className="sr-only">Yönetim Paneli</span>
-            </Link>
-          </Button>
+          {isAdmin && (
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/admin">
+                <UserCog className="h-5 w-5" />
+                <span className="sr-only">Yönetim Paneli</span>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

@@ -23,7 +23,10 @@
     "predeploy": "npm run build",
     "import:posts": "node scripts/import-posts.js",
     "import:media": "node scripts/bulk-import-media.js",
-    "posts:from-media": "node scripts/posts-from-media.js"
+    "posts:from-media": "node scripts/posts-from-media.js",
+    "test:firebase": "tsx scripts/test-firebase-helpers.ts",
+    "test:actions": "tsx scripts/test-actions-firebase.ts",
+    "migrate:firebase": "tsx scripts/migrate-to-firebase.ts"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",

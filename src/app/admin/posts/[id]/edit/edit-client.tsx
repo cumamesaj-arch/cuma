@@ -35,12 +35,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Image from "next/image"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { PlaceHolderImages } from "@/lib/placeholder-images"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import type { Post } from "@/lib/types";
-import { updatePostAction, getCategorySettingsAction, getCustomMenusAction, generateSEOKeywordsAction, getPlaceholderImagesAction } from "@/app/actions";
+import { updatePostAction, getCategorySettingsAction, getCustomMenusAction, generateSEOKeywordsAction } from "@/app/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CategorySettings, CustomMenu } from "@/lib/types";
+import { useImages } from "@/contexts/ImagesContext";
 
 function slugify(text: string) {
   return text
@@ -99,14 +99,19 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
   const [mealleriUrl, setMealleriUrl] = React.useState(post?.content.mealleri || '');
   const [tefsirUrl, setTefsirUrl] = React.useState(post?.content.tefsir || '');
   const [kisaTefsirUrl, setKisaTefsirUrl] = React.useState(post?.content.kisaTefsir || '');
-  const [youtubeUrl, setYoutubeUrl] = React.useState(
-    post?.youtubeVideoId ? `https://www.youtube.com/watch?v=${post.youtubeVideoId}` : ''
-  );
+  // Support multiple YouTube videos - fallback to single videoId for backward compatibility
+  const initialYoutubeUrls: string[] = post
+    ? (post.youtubeVideoIds && post.youtubeVideoIds.length > 0
+        ? post.youtubeVideoIds.map(id => `https://www.youtube.com/watch?v=${id}`)
+        : (post.youtubeVideoId ? [`https://www.youtube.com/watch?v=${post.youtubeVideoId}`] : ['']))
+    : [''];
+  const [youtubeUrls, setYoutubeUrls] = React.useState<string[]>(initialYoutubeUrls);
   
   const [isPending, startTransition] = React.useTransition();
   const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
   const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
-  const [availableImages, setAvailableImages] = React.useState<typeof PlaceHolderImages>(PlaceHolderImages);
+  // Use context for immediate image loading
+  const { images: availableImages } = useImages();
   const [isImageDialogOpen, setIsImageDialogOpen] = React.useState(false);
   const socialPlatforms = ["Facebook", "X", "Instagram", "Pinterest", "YouTube", "WhatsApp"];
 
@@ -123,13 +128,6 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
     getCategorySettingsAction().then(setCategorySettings);
     getCustomMenusAction().then(setCustomMenus);
   }, []);
-
-  // Load images when dialog opens
-  React.useEffect(() => {
-    if (isImageDialogOpen) {
-      getPlaceholderImagesAction().then(setAvailableImages);
-    }
-  }, [isImageDialogOpen]);
 
   // Check if selected category should hide meal/tefsir fields
   // Hide for: "Diğer" (diger), "Videolar" subcategories, "Fotograflar" (custom menu)
@@ -244,7 +242,11 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
       setMealleriUrl(post.content.mealleri || '');
       setTefsirUrl(post.content.tefsir || '');
       setKisaTefsirUrl(post.content.kisaTefsir || '');
-      setYoutubeUrl(post.youtubeVideoId ? `https://www.youtube.com/watch?v=${post.youtubeVideoId}` : '');
+      // Support multiple YouTube videos
+      const urls = post.youtubeVideoIds && post.youtubeVideoIds.length > 0
+        ? post.youtubeVideoIds.map(id => `https://www.youtube.com/watch?v=${id}`)
+        : (post.youtubeVideoId ? [`https://www.youtube.com/watch?v=${post.youtubeVideoId}`] : ['']);
+      setYoutubeUrls(urls);
       // Update SEO fields
       setMetaTitle(post.seo?.metaTitle || "");
       setMetaDescription(post.seo?.metaDescription || "");
@@ -365,7 +367,14 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
             tefsir: shouldHideMealFields ? '' : tefsirUrl,
             kisaTefsir: shouldHideMealFields ? '' : kisaTefsirUrl,
         },
-        youtubeVideoId: extractYouTubeVideoId(youtubeUrl),
+        // Extract video IDs from URLs array, filter out empty ones
+        youtubeVideoIds: youtubeUrls
+          .map(url => extractYouTubeVideoId(url))
+          .filter(id => id && id.trim().length > 0),
+        // Keep single videoId for backward compatibility (first video)
+        youtubeVideoId: youtubeUrls.length > 0 && extractYouTubeVideoId(youtubeUrls[0]) 
+          ? extractYouTubeVideoId(youtubeUrls[0]) 
+          : undefined,
         createdAt: post.createdAt, // Keep original creation date
         ...(category === 'cuma-mesajlari' && { customMessage: "CUMA'NIN HAYR VE BEREKETİ ÜZERİNİZE OLSUN" }),
         ...((metaTitle || metaDescription || keywords.length > 0 || ogImage) && {
@@ -543,16 +552,59 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
                   </>
                 )}
                 <div className="grid gap-3">
-                  <Label htmlFor="youtube-link">YouTube Video Linki</Label>
-                  <Input
-                    id="youtube-link"
-                    name="youtube_url"
-                    type="url"
-                    className="w-full"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={youtubeUrl}
-                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="youtube-link">YouTube Video Linkleri</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setYoutubeUrls([...youtubeUrls, ''])}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Video Ekle
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {youtubeUrls.map((url, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          id={`youtube-link-${index}`}
+                          name={`youtube_url_${index}`}
+                          type="url"
+                          className="w-full"
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          value={url}
+                          onChange={(e) => {
+                            const newUrls = [...youtubeUrls];
+                            newUrls[index] = e.target.value;
+                            setYoutubeUrls(newUrls);
+                          }}
+                        />
+                        {youtubeUrls.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              const newUrls = youtubeUrls.filter((_, i) => i !== index);
+                              if (newUrls.length === 0) {
+                                setYoutubeUrls(['']);
+                              } else {
+                                setYoutubeUrls(newUrls);
+                              }
+                            }}
+                            className="shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Bir veya birden fazla YouTube video linki ekleyebilirsiniz.
+                  </p>
                 </div>
               </div>
               )}
@@ -728,7 +780,27 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
                   <div className="grid grid-cols-1 gap-4">
                     {selectedImages.map((imageId) => {
                       const image = availableImages.find(img => img.id === imageId);
-                      if (!image) return null;
+                      if (!image) {
+                        // Image not found - might be deleted, show message
+                        return (
+                          <div key={imageId} className="relative group">
+                            <div className="aspect-square w-full max-w-md mx-auto rounded-md border-2 border-dashed border-muted-foreground/50 flex items-center justify-center bg-muted/30">
+                              <div className="text-center p-4">
+                                <p className="text-sm font-medium text-muted-foreground mb-1">Görsel Bulunamadı</p>
+                                <p className="text-xs text-muted-foreground">Bu görsel silinmiş veya mevcut değil</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="absolute top-2 right-2 h-7 w-7 inline-flex items-center justify-center rounded-md bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => setSelectedImages(prev => prev.filter(id => id !== imageId))}
+                              aria-label="Görseli kaldır"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        );
+                      }
                       return (
                         <div key={imageId} className="relative group">
                           <Image
@@ -738,6 +810,8 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
                             src={image.imageUrl}
                             width={300}
                             data-ai-hint={image.imageHint}
+                            priority
+                            loading="eager"
                           />
                           <button
                             type="button"
@@ -762,7 +836,20 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl">
                     <DialogHeader>
-                      <DialogTitle>Medya Galerisi</DialogTitle>
+                      <div className="flex items-center justify-between">
+                        <DialogTitle>Medya Galerisi</DialogTitle>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          onClick={() => setIsImageDialogOpen(false)}
+                        >
+                          <Link href="/admin/media">
+                            Medya Deposu
+                          </Link>
+                        </Button>
+                      </div>
                     </DialogHeader>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[60vh] overflow-y-auto p-4">
                       {availableImages.map(image => (
@@ -783,6 +870,8 @@ export default function EditPostPageClient({ params }: EditPostPageClientProps) 
                             height={200}
                             className="aspect-square w-full rounded-md object-cover transition-transform group-hover:scale-105"
                             data-ai-hint={image.imageHint}
+                            loading="eager"
+                            priority
                           />
                           {selectedImages.includes(image.id) && (
                             <span className="absolute top-2 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white shadow-md">

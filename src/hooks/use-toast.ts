@@ -57,6 +57,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const dismissedToasts = new Set<string>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -96,9 +97,11 @@ export const reducer = (state: State, action: Action): State => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
+        dismissedToasts.add(toastId)
         addToRemoveQueue(toastId)
       } else {
         state.toasts.forEach((toast) => {
+          dismissedToasts.add(toast.id)
           addToRemoveQueue(toast.id)
         })
       }
@@ -117,11 +120,13 @@ export const reducer = (state: State, action: Action): State => {
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
+        dismissedToasts.clear()
         return {
           ...state,
           toasts: [],
         }
       }
+      dismissedToasts.delete(action.toastId)
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -150,7 +155,11 @@ function toast({ ...props }: Toast) {
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  const dismiss = () => {
+    if (!dismissedToasts.has(id)) {
+      dispatch({ type: "DISMISS_TOAST", toastId: id })
+    }
+  }
 
   dispatch({
     type: "ADD_TOAST",
@@ -159,7 +168,10 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        // Sadece kapatıldığında ve henüz kapatılmamışsa dismiss çağır
+        if (!open && !dismissedToasts.has(id)) {
+          dismiss()
+        }
       },
     },
   })

@@ -247,18 +247,16 @@ const defaultSections: HomepageSections = {
   }
 };
 
-// Server-side: Load from JSON file
+// Server-side: Load from Firebase
 export async function loadHomepageSections(): Promise<HomepageSections> {
   if (typeof window === 'undefined') {
-    // Server-side: read from JSON file
+    // Server-side: read from Firebase
     try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      const filePath = path.join(process.cwd(), 'src/lib/homepage-sections.json');
-      const fileContent = await fs.readFile(filePath, 'utf-8');
-      return JSON.parse(fileContent) as HomepageSections;
+      const { getHomepageSections } = await import('@/lib/firestore');
+      const sections = await getHomepageSections();
+      return sections || defaultSections;
     } catch (error) {
-      console.error('Error loading homepage sections from JSON:', error);
+      console.error('Error loading homepage sections from Firebase:', error);
       return defaultSections;
     }
   }

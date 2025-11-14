@@ -14,6 +14,8 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,7 +62,7 @@ import {
 } from '@/components/ui/select';
 import { POSTS, CATEGORIES } from '@/lib/data';
 import { deletePostAction, getUsersAction, updatePostAction, updatePostStatusAction, getCustomMenusAction } from '@/app/actions';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useImages } from '@/contexts/ImagesContext';
 import { getCategorySettingsAction } from '@/app/actions';
 import type { CategorySettings, CustomMenu } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -111,6 +113,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const { images: availableImages } = useImages();
   // Hydration uyarılarını önlemek için istatistikleri sadece client mount sonrası göster
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -118,6 +121,7 @@ export default function Dashboard() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [categorySettings, setCategorySettings] = useState<CategorySettings[]>([]);
   const [customMenus, setCustomMenus] = useState<CustomMenu[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const normalizeSlug = (value?: string) => String(value || '')
     .trim()
     .replace(/^\//, '')
@@ -219,11 +223,24 @@ export default function Dashboard() {
   );
   const recentPosts = filteredPosts.slice(0, 5);
 
-  // Load users
+  // Load users and current user info
   useEffect(() => {
     loadUsers();
     getCategorySettingsAction().then(setCategorySettings);
     getCustomMenusAction().then(setCustomMenus);
+    
+    // Load current user info
+    if (typeof window !== 'undefined') {
+      try {
+        const userStr = localStorage.getItem('adminUser');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setCurrentUser(user);
+        }
+      } catch (e) {
+        console.error('Error loading user info:', e);
+      }
+    }
   }, []);
 
   const loadUsers = async () => {
@@ -263,8 +280,45 @@ export default function Dashboard() {
     });
   };
 
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('isAdmin');
+      sessionStorage.removeItem('isAdmin');
+      localStorage.removeItem('adminUser');
+      // Clear cookie
+      document.cookie = 'isAdmin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      window.location.href = '/admin/login';
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 md:gap-8">
+      {/* User Info and Logout Section */}
+      {currentUser && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold">{currentUser.name}</p>
+                  <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+                  <Badge variant="secondary" className="mt-1">
+                    {currentUser.role === 'admin' ? 'Yönetici' : currentUser.role === 'editor' ? 'Editör' : 'Görüntüleyici'}
+                  </Badge>
+                </div>
+              </div>
+              <Button variant="outline" onClick={handleLogout} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Çıkış Yap
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -476,7 +530,7 @@ export default function Dashboard() {
                   displayTitle = displayTitle || 'Bilinmeyen';
                   
                   const primaryImageId = post.imageId || (post.imageIds && post.imageIds.length > 0 ? post.imageIds[0] : undefined);
-                  const image = primaryImageId ? PlaceHolderImages.find(img => img.id === primaryImageId) : undefined;
+                  const image = primaryImageId ? availableImages.find(img => img.id === primaryImageId) : undefined;
                   return (
                     <TableRow key={post.id}>
                         <TableCell className="hidden sm:table-cell">
@@ -490,6 +544,8 @@ export default function Dashboard() {
                                 width="48"
                                 data-ai-hint={image.imageHint}
                                 unoptimized={image.imageUrl.startsWith('/uploads/')}
+                                loading="eager"
+                                priority
                               />
                             </Link>
                           )}

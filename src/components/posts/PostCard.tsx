@@ -5,25 +5,30 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Post } from '@/lib/types';
-import { CATEGORIES } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { getPlaceholderImagesAction } from '@/app/actions';
-import { ArrowUpRight } from 'lucide-react';
+import type { Category } from '@/lib/types';
+import { useImages } from '@/contexts/ImagesContext';
+import { getCategoriesAction } from '@/app/actions';
 import { useEffect, useState } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
+  availableImages?: ImagePlaceholder[]; // Optional prop for explicit override
+  priority?: boolean;
 }
 
-export function PostCard({ post }: PostCardProps) {
-  const [availableImages, setAvailableImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
-  
+export function PostCard({ post, availableImages: propAvailableImages, priority = false }: PostCardProps) {
+  // Use context images by default, but allow prop override
+  const { images: contextImages } = useImages();
+  const availableImages = propAvailableImages || contextImages;
+  const [categories, setCategories] = useState<Category[]>([]);
+
   useEffect(() => {
-    getPlaceholderImagesAction().then(setAvailableImages);
+    getCategoriesAction().then(setCategories);
   }, []);
 
-  const category = CATEGORIES.find((c) => c.slug === post.category) || (CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category));
+  const category = categories.find((c) => c.slug === post.category) || (categories.flatMap(c => c.subcategories || []).find(s => s.slug === post.category));
   // Resolve primary image from post images
   const primaryImageId = post.imageId || (post.imageIds && post.imageIds[0]) || undefined;
   const image = primaryImageId ? availableImages.find((img) => img.id === primaryImageId) : undefined;
@@ -43,10 +48,10 @@ export function PostCard({ post }: PostCardProps) {
         <Link href={postUrl} className="relative block h-48 w-full">
           {preferImage ? (
             hasImage && imageUrl ? (
-              <Image src={imageUrl} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={image?.imageHint} unoptimized />
+              <Image src={imageUrl} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={image?.imageHint} unoptimized priority={priority} loading="eager" />
             ) : youTubeId ? (
               <>
-                <Image src={videoThumbnail as string} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                <Image src={videoThumbnail as string} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" priority={priority} loading="eager" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-red-600 rounded-full p-4">
                     <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -61,7 +66,7 @@ export function PostCard({ post }: PostCardProps) {
           ) : (
             youTubeId ? (
               <>
-                <Image src={videoThumbnail as string} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                <Image src={videoThumbnail as string} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" priority={priority} loading="eager" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-red-600 rounded-full p-4">
                     <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -71,7 +76,7 @@ export function PostCard({ post }: PostCardProps) {
                 </div>
               </>
             ) : hasImage && imageUrl ? (
-              <Image src={imageUrl} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={image?.imageHint} unoptimized />
+              <Image src={imageUrl} alt={post.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={image?.imageHint} unoptimized priority={priority} loading="eager" />
             ) : (
               <div className="absolute inset-0 bg-muted" />
             )

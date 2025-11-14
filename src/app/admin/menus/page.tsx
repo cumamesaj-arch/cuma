@@ -43,8 +43,7 @@ import {
   updateMenuGlobalConfigAction
 } from '@/app/actions';
 import { useRouter } from 'next/navigation';
-import initialSocialLinks from '@/lib/social-links.json';
-import initialShareLinks from '@/lib/share-links.json';
+import { getSocialLinksAction, getShareLinksAction } from '@/app/actions';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import {
@@ -69,8 +68,8 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function MenusPage() {
-  const [socialLinks, setSocialLinks] = React.useState<SocialLink[]>(initialSocialLinks);
-  const [sharePlatforms, setSharePlatforms] = React.useState<SharePlatform[]>(initialShareLinks);
+  const [socialLinks, setSocialLinks] = React.useState<SocialLink[]>([]);
+  const [sharePlatforms, setSharePlatforms] = React.useState<SharePlatform[]>([]);
   const [customMenus, setCustomMenus] = React.useState<CustomMenu[]>([]);
   const [categorySettings, setCategorySettings] = React.useState<CategorySettings[]>([]);
 
@@ -119,10 +118,12 @@ export default function MenusPage() {
   const [menuConfig, setMenuConfig] = React.useState<MenuGlobalConfig>({ categoryPagePostCount: 12 });
 
   React.useEffect(() => {
-    // Load custom menus and category settings
+    // Firebase'den tüm menü verilerini yükle
     getCustomMenusAction().then(setCustomMenus);
     getCategorySettingsAction().then(setCategorySettings);
     getMenuGlobalConfigAction().then(setMenuConfig);
+    getSocialLinksAction().then(setSocialLinks);
+    getShareLinksAction().then(setSharePlatforms);
   }, []);
 
   const getCategorySetting = (categoryId: string): CategorySettings | undefined => {

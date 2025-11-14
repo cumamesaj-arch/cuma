@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useMemo, useCallback, type ComponentType, type FormEvent } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { POSTS } from '@/lib/data';
 import { PostCard } from '@/components/posts/PostCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,15 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, BookOpen, Bot, History } from 'lucide-react';
 import Link from 'next/link';
-import homepageSectionsData, { type HomepageSections, type HeroOverlayMessage } from '@/lib/homepage-sections';
+import { type HomepageSections, type HeroOverlayMessage, default as defaultHomepageSections } from '@/lib/homepage-sections';
+import { getHomepageSectionsAction, getPostsAction } from '@/app/actions';
+import type { Post } from '@/lib/types';
 import { trackButtonClick } from '@/lib/analytics';
 import { addVisitorMessageAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import type { VisitorMessage } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { getPlaceholderImagesAction } from '@/app/actions';
+import { useImages } from '@/contexts/ImagesContext';
 
 // Icon mapping
 const iconMap: { [key: string]: ComponentType<{ className?: string }> } = {
@@ -109,53 +108,30 @@ function VisitorMessageForm({ title, description }: { title?: string; descriptio
 }
 
 export default function Home() {
-  const [sections, setSections] = useState<HomepageSections>(homepageSectionsData);
+  const [sections, setSections] = useState<HomepageSections>(defaultHomepageSections);
   const [sectionsLoaded, setSectionsLoaded] = useState(true); // İlk render'da hemen göster, sonra güncelle
-  const [availableImages, setAvailableImages] = useState<ImagePlaceholder[]>(PlaceHolderImages);
+  const { images: availableImages } = useImages();
   
-  // Başlangıç state'lerini homepageSectionsData'dan al
+  // Başlangıç state'lerini default sections'dan al
   // Önce defaultDisplayMode'u kontrol et, yoksa butonların defaultSection'ını kullan
-  const initialDefaultMode = homepageSectionsData.topSection?.defaultDisplayMode || homepageSectionsData.topSection?.buttons?.[0]?.defaultSection || 'featured';
+  const initialDefaultMode = defaultHomepageSections.topSection?.defaultDisplayMode || defaultHomepageSections.topSection?.buttons?.[0]?.defaultSection || 'featured';
   const [showRandomPosts, setShowRandomPosts] = useState(initialDefaultMode === 'random');
   const [showLatestPosts, setShowLatestPosts] = useState(initialDefaultMode === 'latest');
-  const [randomPosts, setRandomPosts] = useState<typeof POSTS>([]);
+  const [randomPosts, setRandomPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [currentHeroImageIndex, setCurrentHeroImageIndex] = useState(0);
 
-  // Load images dynamically
+  // Load homepage sections from Firebase (runtime) - slayt için gerekli
   useEffect(() => {
-    getPlaceholderImagesAction().then(setAvailableImages);
-  }, []);
-
-  // Load homepage sections from JSON file (runtime) - slayt için gerekli
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    let controller: AbortController | null = null;
-    
     const loadSections = async () => {
       try {
-        // Timeout için AbortController kullan (2 saniye - daha hızlı)
-        controller = new AbortController();
-        timeoutId = setTimeout(() => {
-          if (controller) {
-            controller.abort();
-          }
-        }, 2000);
+        // Firebase'den ana sayfa bölümlerini çek
+        const data = await getHomepageSectionsAction();
+        setSections(data);
+        setSectionsLoaded(true);
         
-        const response = await fetch('/api/homepage-sections', { 
-          signal: controller.signal,
-          cache: 'default' // Use browser cache
-        });
-        
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        
-        if (response.ok) {
-          const data = await response.json();
-          setSections(data);
-          setSectionsLoaded(true);
+        if (data) {
           
           // Hero görsellerini kontrol et ve index'i sıfırla
           if (data.hero?.page1Images && data.hero.page1Images.length > 0) {
@@ -184,53 +160,55 @@ export default function Home() {
               setTimeout(() => setShowAnnouncement(false), d);
             }
           }
-        } else {
-          // API başarısız oldu, default kullan
-          setSections(homepageSectionsData);
-          setSectionsLoaded(true);
-          
-          if (homepageSectionsData.hero?.page1Images && homepageSectionsData.hero.page1Images.length > 0) {
-            setCurrentHeroImageIndex(0);
-          }
         }
       } catch (error) {
-        // AbortError normal bir durum (timeout veya component unmount), sadece log'la
-        if (error instanceof Error && error.name === 'AbortError') {
-          return;
-        }
-        // Diğer hatalar için fallback kullan (production'da log yok)
-        setSections(homepageSectionsData);
+        // Hata durumunda default sections kullan
+        console.error('Error loading homepage sections:', error);
+        const { default: defaultSections } = await import('@/lib/homepage-sections');
+        setSections(defaultSections);
         setSectionsLoaded(true);
         
-        if (homepageSectionsData.hero?.page1Images && homepageSectionsData.hero.page1Images.length > 0) {
+        if (defaultSections.hero?.page1Images && defaultSections.hero.page1Images.length > 0) {
           setCurrentHeroImageIndex(0);
         }
       }
     };
 
     loadSections();
-
-    // Cleanup: component unmount olduğunda timeout ve fetch'i iptal et
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (controller) {
-        controller.abort();
-      }
-    };
   }, []);
 
-  // Memoize published posts to avoid filtering on every render
-  const publishedPosts = useMemo(() => {
-    return POSTS.filter(post => !post.status || post.status === 'published');
-  }, [POSTS]);
+  // Load posts from Firebase - Optimize: Sadece gerekli sayıda post yükle
+  useEffect(() => {
+    async function loadPosts() {
+      // Ana sayfa için maksimum post sayısını hesapla
+      // Öne çıkan gönderiler için: postCount + biraz buffer (cache için)
+      const postCount = sections.topSection?.postCount || 12;
+      const limit = Math.max(postCount * 2, 24); // En az 24, maksimum 2x postCount
+      
+      const loadedPosts = await getPostsAction({ 
+        status: 'published',
+        limit: limit,
+        orderBy: 'createdAt',
+        orderDirection: 'desc'
+      });
+      setPosts(loadedPosts);
+    }
+    // Sections yüklendikten sonra postları yükle
+    if (sectionsLoaded) {
+      loadPosts();
+    }
+  }, [sectionsLoaded, sections.topSection?.postCount]);
 
-  // Function to get random posts from all published posts - optimized with useCallback
+  // Memoize published posts
+  const publishedPosts = useMemo(() => {
+    return posts.filter(post => !post.status || post.status === 'published');
+  }, [posts]);
+
+  // Function to get random posts - Optimize: Mevcut yüklenmiş postlardan seç (ekstra yükleme yok)
   const getRandomPosts = useCallback(() => {
     const postCount = sections.topSection?.postCount || 9;
     
-    // Shuffle array and get random posts based on postCount setting
+    // Mevcut yüklenmiş postlardan random seç (zaten limit ile yüklendi)
     const shuffled = [...publishedPosts].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, Math.min(postCount, shuffled.length));
     
@@ -357,7 +335,7 @@ export default function Home() {
   }, [publishedPosts, sections.topSection?.sortBy, sections.topSection?.sortDirection]);
   
   // Üst Bölüm ayarlarını kullan (sectionSettings kaldırıldı)
-  const [limit, setLimit] = useState(homepageSectionsData.topSection?.postCount || 12);
+  const [limit, setLimit] = useState(defaultHomepageSections.topSection?.postCount || 12);
   
   // Update limit when sections are loaded or active section changes
   useEffect(() => {
@@ -748,7 +726,7 @@ export default function Home() {
                                 return (
                                   <article key={post.id} className="rounded-md border bg-card/60 p-4 flex gap-6 items-start">
                                     {imgSrc && (
-                                      <img src={imgSrc} alt={post.title} className="h-44 w-80 object-cover rounded-md border" />
+                                      <img src={imgSrc} alt={post.title} className="h-44 w-80 object-cover rounded-md border" loading="eager" />
                                     )}
                                     <div className="flex-1 min-w-0">
                                       <h3 className="font-semibold mb-1 truncate">{post.title}</h3>
@@ -794,8 +772,8 @@ export default function Home() {
                         return (
                             <div className={`grid ${getGridCols()} gap-6 mb-8`}>
                         {recentPosts.length > 0 ? (
-                            recentPosts.map((post) => (
-                                <PostCard key={post.id} post={post} />
+                            recentPosts.map((post, index) => (
+                                <PostCard key={post.id} post={post} priority={index < 8} />
                             ))
                         ) : (
                             <div className="col-span-full text-center py-8">

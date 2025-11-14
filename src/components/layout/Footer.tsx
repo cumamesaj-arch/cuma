@@ -21,22 +21,20 @@ export function Footer() {
   const [footerLinks, setFooterLinks] = useState<Array<{ label: string; url: string }>>([]);
 
   useEffect(() => {
-    // Load branding from API
+    // Firebase'den branding ve footer bilgilerini yükle
     const loadBranding = async () => {
       try {
-        const response = await fetch('/api/homepage-sections');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.branding) {
-            setBranding(data.branding);
-          }
-          if (data.footer) {
-            setFooterTitle(data.footer.title || 'Sosyal Medya Linklerim');
-            setFooterText(data.footer.text || 'Tüm hakları saklıdır.');
-            setShowYear(typeof data.footer.showYear === 'boolean' ? data.footer.showYear : true);
-            setShowSocials(typeof data.footer.showSocials === 'boolean' ? data.footer.showSocials : true);
-            setFooterLinks(data.footer.links || []);
-          }
+        const { getHomepageSectionsAction } = await import('@/app/actions');
+        const data = await getHomepageSectionsAction();
+        if (data.branding) {
+          setBranding(data.branding);
+        }
+        if (data.footer) {
+          setFooterTitle(data.footer.title || 'Sosyal Medya Linklerim');
+          setFooterText(data.footer.text || 'Tüm hakları saklıdır.');
+          setShowYear(typeof data.footer.showYear === 'boolean' ? data.footer.showYear : true);
+          setShowSocials(typeof data.footer.showSocials === 'boolean' ? data.footer.showSocials : true);
+          setFooterLinks(data.footer.links || []);
         }
       } catch (error) {
         console.error('Failed to load branding:', error);

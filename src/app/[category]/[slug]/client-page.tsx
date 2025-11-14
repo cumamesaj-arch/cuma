@@ -4,14 +4,11 @@ import * as React from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CATEGORIES } from '@/lib/data';
-import socialLinks from '@/lib/social-links.json';
-import shareLinks from '@/lib/share-links.json';
-import type { SocialLink } from '@/lib/types';
+import type { SocialLink, SharePlatform, Category } from '@/lib/types';
+import { getSocialLinksAction, getShareLinksAction, getCategoriesAction } from '@/app/actions';
 import type { Post } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { getPlaceholderImagesAction } from '@/app/actions';
+import { useImages } from '@/contexts/ImagesContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -113,11 +110,10 @@ export default function PostClientPage({ post }: { post: Post }) {
   const [isZoomed, setIsZoomed] = React.useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
-  const [availableImages, setAvailableImages] = React.useState<ImagePlaceholder[]>(PlaceHolderImages);
-
-  React.useEffect(() => {
-    getPlaceholderImagesAction().then(setAvailableImages);
-  }, []);
+  const { images: availableImages } = useImages();
+  const [socialLinks, setSocialLinks] = React.useState<SocialLink[]>([]);
+  const [shareLinks, setShareLinks] = React.useState<SharePlatform[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -125,9 +121,9 @@ export default function PostClientPage({ post }: { post: Post }) {
     }
     
     // Track post view
-    if (post) {
-      const category = CATEGORIES.find(c => c.slug === post.category) || 
-                        CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
+    if (post && categories.length > 0) {
+      const category = categories.find(c => c.slug === post.category) || 
+                        categories.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
       trackPostView(post.id, post.title, category?.title || post.category);
     }
 
@@ -155,11 +151,26 @@ export default function PostClientPage({ post }: { post: Post }) {
     }
   }, [post]);
 
+  // Firebase'den sosyal medya, paylaşım linklerini ve kategorileri yükle
+  React.useEffect(() => {
+    async function loadLinks() {
+      const [social, share, cats] = await Promise.all([
+        getSocialLinksAction(),
+        getShareLinksAction(),
+        getCategoriesAction(),
+      ]);
+      setSocialLinks(social);
+      setShareLinks(share);
+      setCategories(cats);
+    }
+    loadLinks();
+  }, []);
+
   if (!post) {
     notFound();
   }
 
-  const category = CATEGORIES.find((c) => c.slug === post.category) || CATEGORIES.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
+  const category = categories.find((c) => c.slug === post.category) || categories.flatMap(c => c.subcategories || []).find(s => s.slug === post.category);
   // Support both imageId and imageIds
   const primaryImageId = post.imageId || (post.imageIds && post.imageIds[0]);
   const image = primaryImageId ? availableImages.find((img) => img.id === primaryImageId) : undefined;
@@ -167,7 +178,7 @@ export default function PostClientPage({ post }: { post: Post }) {
   const activeSocialLinks = socialLinks.filter(link => link.active);
 
   // Check if this is a category that should show special content (Diğer, Videolar, Fotograflar)
-  const videosCategory = CATEGORIES.find(c => c.slug === 'videolar');
+  const videosCategory = categories.find(c => c.slug === 'videolar');
   // More robust check for video categories including "Diğer Videolar"
   const isVideosCategory = category?.slug === 'videolar' || 
                            (videosCategory?.subcategories?.some(s => s.slug === post.category)) ||
@@ -322,6 +333,8 @@ export default function PostClientPage({ post }: { post: Post }) {
                                           fill
                                           className='object-contain'
                                           unoptimized={postImages[currentImageIndex].imageUrl.startsWith('/uploads/')}
+                                          loading="eager"
+                                          priority
                                         />
                                       </div>
                                       {postImages.length > 1 && (
@@ -354,7 +367,7 @@ export default function PostClientPage({ post }: { post: Post }) {
                                             className={cn('relative h-16 w-16 md:h-20 md:w-20 rounded border overflow-hidden', idx===currentImageIndex ? 'ring-2 ring-primary' : '')}
                                             onClick={() => { setCurrentImageIndex(idx); setIsZoomed(false); }}
                                           >
-                                            <Image src={img.imageUrl} alt={img.description || post.title} fill className="object-cover" />
+                                            <Image src={img.imageUrl} alt={img.description || post.title} fill className="object-cover" loading="eager" priority={idx === currentImageIndex} />
                                           </button>
                                         ))}
                                       </div>
@@ -369,7 +382,7 @@ export default function PostClientPage({ post }: { post: Post }) {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                       {postImages.map((img) => (
                                         <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden">
-                                          <Image src={img.imageUrl} alt={img.description || post.title} fill className="object-cover" />
+                                          <Image src={img.imageUrl} alt={img.description || post.title} fill className="object-cover" loading="eager" priority />
                                         </div>
                                       ))}
                                     </div>
@@ -454,6 +467,7 @@ export default function PostClientPage({ post }: { post: Post }) {
                                 fill
                                 className="object-contain rounded-lg"
                                 priority
+                                loading="eager"
                                 data-ai-hint={image.imageHint}
                                 unoptimized
                             />
@@ -507,18 +521,24 @@ export default function PostClientPage({ post }: { post: Post }) {
                           </>
                         )}
                         
-                        {/* Show YouTube video in main content only if not special category (special categories show videos in header) */}
-                        {!isSpecialCategory && post.youtubeVideoId && (
+                        {/* Show YouTube videos in main content only if not special category (special categories show videos in header) */}
+                        {!isSpecialCategory && youtubeVideoIds.length > 0 && (
                             <div className="space-y-4 pt-4">
-                                <h2 className="font-headline text-2xl font-bold">İlgili Video</h2>
-                                <div className="aspect-video">
-                                    <iframe
-                                    className="w-full h-full rounded-lg"
-                                    src={`https://www.youtube.com/embed/${post.youtubeVideoId}`}
-                                    title="YouTube video player"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    ></iframe>
+                                <h2 className="font-headline text-2xl font-bold">
+                                    {youtubeVideoIds.length === 1 ? 'İlgili Video' : `İlgili Videolar (${youtubeVideoIds.length})`}
+                                </h2>
+                                <div className="grid gap-4">
+                                    {youtubeVideoIds.map((videoId, index) => (
+                                        <div key={index} className="aspect-video">
+                                            <iframe
+                                                className="w-full h-full rounded-lg"
+                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                title={`YouTube video ${index + 1}`}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -559,6 +579,8 @@ export default function PostClientPage({ post }: { post: Post }) {
                 fill
                 className={cn('object-contain transition-transform duration-200', isZoomed ? 'scale-[1.6]' : 'scale-100')}
                 unoptimized={postImages[currentImageIndex].imageUrl.startsWith('/uploads/')}
+                loading="eager"
+                priority
               />
             </div>
             {postImages.length > 1 && (

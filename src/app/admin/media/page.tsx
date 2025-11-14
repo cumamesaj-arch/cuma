@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { PlaceHolderImages as initialImages } from "@/lib/placeholder-images"
 import type { ImagePlaceholder } from "@/lib/placeholder-images";
+import { useImages } from "@/contexts/ImagesContext";
 import { Button } from "@/components/ui/button"
 import { Upload, Trash2, RotateCcw, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,8 @@ import {
   permanentlyDeleteImageAction,
   emptyDeletedImagesAction,
   generateAIImageAction,
-  generateAIImageEditAction
+  generateAIImageEditAction,
+  getPlaceholderImagesAction
 } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import {
@@ -71,7 +72,8 @@ function MediaPageContent() {
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [images, setImages] = useState<ImagePlaceholder[]>(initialImages);
+    const { images: contextImages } = useImages();
+    const [images, setImages] = useState<ImagePlaceholder[]>(contextImages);
     const [deletedImages, setDeletedImages] = useState<(ImagePlaceholder & { deletedAt: string })[]>([]);
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -94,7 +96,16 @@ function MediaPageContent() {
 
     useEffect(() => {
         getDeletedImagesAction().then(setDeletedImages);
+        // Load images from action to ensure we have the latest data
+        getPlaceholderImagesAction().then(setImages);
     }, []);
+
+    // Update images when context images change (for real-time updates)
+    useEffect(() => {
+        if (contextImages.length > 0) {
+            setImages(contextImages);
+        }
+    }, [contextImages]);
 
     // Open AI dialog if requested via query param (?ai=1)
     useEffect(() => {

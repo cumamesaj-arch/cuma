@@ -10,23 +10,38 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
-import initialComments from '@/lib/comments.json';
-import { addCommentAction, deleteCommentAction, updateCommentAction } from '@/app/actions';
+import { addCommentAction, deleteCommentAction, updateCommentAction, getCommentsAction } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-function FormattedDate({ dateString }: { dateString: string }) {
+function FormattedDate({ dateString }: { dateString?: string }) {
   const [formattedDate, setFormattedDate] = useState('');
 
   useEffect(() => {
-    setFormattedDate(new Date(dateString).toLocaleDateString('tr-TR'));
+    if (dateString) {
+      try {
+        setFormattedDate(new Date(dateString).toLocaleDateString('tr-TR'));
+      } catch (error) {
+        setFormattedDate('');
+      }
+    }
   }, [dateString]);
 
+  if (!dateString) return null;
   return <time className="text-xs text-muted-foreground">{formattedDate}</time>;
 }
 
 export function CommentSection() {
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  
+  // Firebase'den yorumları yükle
+  useEffect(() => {
+    async function loadComments() {
+      const loadedComments = await getCommentsAction();
+      setComments(loadedComments);
+    }
+    loadComments();
+  }, []);
   const [editingText, setEditingText] = useState('');
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -112,7 +127,7 @@ export function CommentSection() {
   
   const startEditing = (comment: Comment) => {
     setEditingCommentId(comment.id);
-    setEditingText(comment.text);
+    setEditingText(comment.text || '');
   };
   
   const cancelEditing = () => {
@@ -143,11 +158,11 @@ export function CommentSection() {
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-4">
               <Avatar>
-                <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{(comment.author || '?').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className='w-full'>
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold">{comment.author}</p>
+                  <p className="font-semibold">{comment.author || 'İsimsiz'}</p>
                   <div className="flex items-center gap-2">
                      <FormattedDate dateString={comment.createdAt} />
                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(comment)}>
@@ -196,7 +211,7 @@ export function CommentSection() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground mt-1">{comment.text}</p>
+                  <p className="text-muted-foreground mt-1">{comment.text || ''}</p>
                 )}
               </div>
             </div>
