@@ -25,7 +25,8 @@ buildConfig:
     # Node.js heap size artırımı (büyük dosyalar için)
     - variable: NODE_OPTIONS
       value: --max-old-space-size=4096
-    # Firebase Configuration
+    
+    # Firebase Client SDK Configuration
     - variable: NEXT_PUBLIC_FIREBASE_API_KEY
       value: AIzaSyB_YePigrW7TjzzXhrtoaimFktrlji8lRE
     - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
@@ -40,3 +41,14 @@ buildConfig:
       value: 1:136445087189:web:153086538227a86781015c
     - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
       value: G-512SQLEGJC
+    
+    # Firebase Admin SDK Configuration (Server-side)
+    # NOT: Bu değerleri Firebase Console > App Hosting > Backend > Environment'tan da ekleyebilirsiniz
+    - variable: FIREBASE_ADMIN_PROJECT_ID
+      value: cuma-mesajlari-dfc6c
+    - variable: FIREBASE_ADMIN_CLIENT_EMAIL
+      availability: RUNTIME
+      secret: firebase-admin-client-email
+    - variable: FIREBASE_ADMIN_PRIVATE_KEY
+      availability: RUNTIME
+      secret: firebase-admin-private-key
