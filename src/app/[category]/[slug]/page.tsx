@@ -81,3 +81,16 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return <PostClientPage post={post} />;
 }
+
+
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
+
+  // Don't show draft posts - return 404
+  if (!post || post.status === 'draft') {
+    notFound();
+  }
+
+  return <PostClientPage post={post} />;
+}

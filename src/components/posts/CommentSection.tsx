@@ -221,3 +221,18 @@ export function CommentSection() {
     </Card>
   );
 }
+
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground mt-1">{comment.text || ''}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

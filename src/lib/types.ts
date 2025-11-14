@@ -231,3 +231,35 @@ export interface SocialMediaAPI {
   createdAt?: string;
   updatedAt?: string;
 }
+
+  facebookAppId?: string;
+  facebookAppSecret?: string;
+  facebookAccessToken?: string;
+  facebookPageId?: string;
+  // Twitter/X API
+  twitterApiKey?: string;
+  twitterApiSecret?: string;
+  twitterBearerToken?: string;
+  twitterAccessToken?: string;
+  twitterAccessTokenSecret?: string;
+  // LinkedIn API
+  linkedinClientId?: string;
+  linkedinClientSecret?: string;
+  linkedinAccessToken?: string;
+  // Instagram API
+  instagramAccessToken?: string;
+  instagramUserId?: string;
+  // Pinterest API
+  pinterestAccessToken?: string;
+  pinterestBoardId?: string;
+  // Generic fields
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  // Additional notes
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

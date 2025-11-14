@@ -66,6 +66,14 @@ export {
   deleteUser,
 } from './users';
 
+// Password Reset helpers
+export {
+  createPasswordResetToken,
+  getPasswordResetTokenByToken,
+  markTokenAsUsed,
+  cleanupExpiredTokens,
+} from './password-reset';
+
 // Visitor Messages helpers
 export {
   getVisitorMessages,
@@ -131,4 +139,3 @@ export {
   updateNote,
   deleteNote,
 } from './settings';
-

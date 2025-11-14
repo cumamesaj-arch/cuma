@@ -362,3 +362,22 @@ export function Header() {
 }
 
     
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+            />
+          </form>
+          {isAdmin && (
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/admin">
+                <UserCog className="h-5 w-5" />
+                <span className="sr-only">Yönetim Paneli</span>
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+    

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
-import { loginAction, resetPasswordAction } from '@/app/actions';
+import { loginAction, requestPasswordResetAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,11 +28,7 @@ export default function LoginPage() {
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
   const [showForgotPassword, setShowForgotPassword] = React.useState(false);
   const [resetEmail, setResetEmail] = React.useState('');
-  const [newPassword, setNewPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
-  const [showNewPassword, setShowNewPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const [isResetting, startResetTransition] = useTransition();
+  const [isRequestingReset, startResetTransition] = useTransition();
 
   // Check if already logged in - with delay to prevent flash
   React.useEffect(() => {
@@ -110,7 +106,7 @@ export default function LoginPage() {
     });
   };
 
-  const handleResetPassword = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRequestPasswordReset = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!resetEmail) {
@@ -122,55 +118,23 @@ export default function LoginPage() {
       return;
     }
     
-    if (!newPassword || !confirmPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Eksik Bilgi',
-        description: 'Lütfen yeni şifrenizi girin.',
-      });
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Şifreler Eşleşmiyor',
-        description: 'Yeni şifre ve şifre onayı eşleşmiyor.',
-      });
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      toast({
-        variant: 'destructive',
-        title: 'Şifre Çok Kısa',
-        description: 'Şifre en az 6 karakter olmalıdır.',
-      });
-      return;
-    }
-    
     startResetTransition(async () => {
-      const result = await resetPasswordAction(resetEmail, newPassword);
+      const result = await requestPasswordResetAction(resetEmail);
       
       if (result.success) {
         toast({
-          title: 'Şifre Başarıyla Sıfırlandı!',
-          description: 'Yeni şifrenizle giriş yapabilirsiniz.',
+          title: 'Email Gönderildi!',
+          description: 'Şifre sıfırlama linki email adresinize gönderildi. Lütfen email kutunuzu kontrol edin.',
         });
         
         // Reset form and close dialog
         setResetEmail('');
-        setNewPassword('');
-        setConfirmPassword('');
         setShowForgotPassword(false);
-        
-        // Pre-fill email in login form
-        setEmail(resetEmail);
       } else {
         toast({
           variant: 'destructive',
-          title: 'Şifre Sıfırlama Başarısız!',
-          description: result.error || 'Şifre sıfırlanırken bir hata oluştu.',
+          title: 'Email Gönderilemedi!',
+          description: result.error || 'Email gönderilirken bir hata oluştu.',
         });
       }
     });
@@ -272,10 +236,10 @@ export default function LoginPage() {
           <DialogHeader>
             <DialogTitle>Şifremi Unuttum</DialogTitle>
             <DialogDescription>
-              Email adresinizi girin ve yeni şifrenizi belirleyin.
+              Email adresinizi girin, size şifre sıfırlama linki gönderelim.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
+          <form onSubmit={handleRequestPasswordReset} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reset-email" className="text-base font-semibold">Email Adresi *</Label>
               <div className="relative">
@@ -287,64 +251,15 @@ export default function LoginPage() {
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   className="pl-10 h-11"
-                  disabled={isResetting}
+                  disabled={isRequestingReset}
                   required
                   autoComplete="email"
                   autoFocus
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password" className="text-base font-semibold">Yeni Şifre *</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="new-password"
-                  type={showNewPassword ? 'text' : 'password'}
-                  placeholder="En az 6 karakter"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11"
-                  disabled={isResetting}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  disabled={isResetting}
-                >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password" className="text-base font-semibold">Yeni Şifre (Tekrar) *</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Şifrenizi tekrar girin"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11"
-                  disabled={isResetting}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  disabled={isResetting}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Email adresinize şifre sıfırlama linki gönderilecektir.
+              </p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -354,15 +269,13 @@ export default function LoginPage() {
                 onClick={() => {
                   setShowForgotPassword(false);
                   setResetEmail('');
-                  setNewPassword('');
-                  setConfirmPassword('');
                 }}
-                disabled={isResetting}
+                disabled={isRequestingReset}
               >
                 İptal
               </Button>
-              <Button type="submit" className="flex-1" disabled={isResetting}>
-                {isResetting ? 'Sıfırlanıyor...' : 'Şifreyi Sıfırla'}
+              <Button type="submit" className="flex-1" disabled={isRequestingReset}>
+                {isRequestingReset ? 'Gönderiliyor...' : 'Email Gönder'}
               </Button>
             </div>
           </form>

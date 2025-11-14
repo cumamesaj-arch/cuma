@@ -100,3 +100,19 @@ export function PostCard({ post, availableImages: propAvailableImages, priority 
     </Card>
   );
 }
+
+      <CardContent className="p-4">
+        {category && (
+          <Badge variant="secondary" className="mb-2">
+            {category.title}
+          </Badge>
+        )}
+        <h3 className="font-headline text-lg font-bold leading-tight">
+          <Link href={postUrl} className="hover:text-primary transition-colors">
+            {post.title}
+          </Link>
+        </h3>
+      </CardContent>
+    </Card>
+  );
+}

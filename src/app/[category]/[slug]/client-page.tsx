@@ -618,3 +618,103 @@ export default function PostClientPage({ post }: { post: Post }) {
 
     
 
+
+                        )}
+                        
+                        {/* Show YouTube videos in main content only if not special category (special categories show videos in header) */}
+                        {!isSpecialCategory && youtubeVideoIds.length > 0 && (
+                            <div className="space-y-4 pt-4">
+                                <h2 className="font-headline text-2xl font-bold">
+                                    {youtubeVideoIds.length === 1 ? 'İlgili Video' : `İlgili Videolar (${youtubeVideoIds.length})`}
+                                </h2>
+                                <div className="grid gap-4">
+                                    {youtubeVideoIds.map((videoId, index) => (
+                                        <div key={index} className="aspect-video">
+                                            <iframe
+                                                className="w-full h-full rounded-lg"
+                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                title={`YouTube video ${index + 1}`}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+
+                 <div className='pt-8'>
+                    <CommentSection />
+                </div>
+            </div>
+        </div>
+
+
+        </article>
+
+        {/* Lightbox (tam ekran) */}
+        {isLightboxOpen && postImages.length > 0 && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            onClick={() => { setIsLightboxOpen(false); setIsZoomed(false); }}
+          >
+            <button
+              type="button"
+              aria-label="Kapat"
+              className="absolute top-4 right-4 text-white/90 hover:text-white text-2xl"
+              onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); setIsZoomed(false); }}
+            >
+              ✕
+            </button>
+            <div
+              className={cn('relative w-full h-full max-w-6xl mx-auto px-6', isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in')}
+              onClick={(e) => { e.stopPropagation(); setIsZoomed(z => !z); }}
+            >
+              <Image
+                src={postImages[currentImageIndex].imageUrl}
+                alt={postImages[currentImageIndex].description || post.title}
+                fill
+                className={cn('object-contain transition-transform duration-200', isZoomed ? 'scale-[1.6]' : 'scale-100')}
+                unoptimized={postImages[currentImageIndex].imageUrl.startsWith('/uploads/')}
+                loading="eager"
+                priority
+              />
+            </div>
+            {postImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Önceki"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-3"
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => (i - 1 + postImages.length) % postImages.length); }}
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  aria-label="Sonraki"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-3"
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => (i + 1) % postImages.length); }}
+                >
+                  ▶
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/90 text-sm">
+                  {currentImageIndex + 1} / {postImages.length}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+    
+
+    
+

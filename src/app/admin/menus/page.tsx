@@ -1414,3 +1414,87 @@ export default function MenusPage() {
     </div>
   );
 }
+
+                      checked={sharePlatformActive}
+                      onCheckedChange={setSharePlatformActive}
+                    />
+                    <Label htmlFor="share-platform-active">Aktif</Label>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsSharePlatformDialogOpen(false)}>
+                    İptal
+                  </Button>
+                  <Button onClick={handleSaveSharePlatform} disabled={isPending}>
+                    {isPending ? 'Ekleniyor...' : 'Ekle'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Sosyal Medya</TableHead>
+                <TableHead className="w-[100px]">Aktif</TableHead>
+                <TableHead className="text-right w-[100px]">Eylemler</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sharePlatforms.map((platform) => (
+                <TableRow key={platform.name}>
+                  <TableCell className="font-medium">{platform.name}</TableCell>
+                  <TableCell>
+                    <Switch
+                        checked={platform.active}
+                        onCheckedChange={(checked) => handleToggleShareActive(platform.name, checked)}
+                        disabled={isPending}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isPending}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Paylaşım Platformunu Silmek İstediğinizden Emin misiniz?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Bu işlem geri alınamaz. Paylaşım platformu kalıcı olarak silinecektir.
+                            <span className="block mt-2 font-semibold">
+                              Platform: {platform.name}
+                            </span>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isPending}>İptal</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteSharePlatform(platform.name)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isPending}
+                          >
+                            {isPending ? 'Siliniyor...' : 'Sil'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+    </div>
+  );
+}

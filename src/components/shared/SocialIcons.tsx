@@ -108,3 +108,56 @@ export function SocialIcons({ className, iconSize = 'h-6 w-6' }: SocialIconsProp
 }
 
     
+  WhatsApp: MessageCircle,
+  nextsosyal: NextSosyalIcon,
+  NextSosyal: NextSosyalIcon,
+};
+
+// Color mapping for social media platforms
+const colorMap: { [key: string]: string } = {
+  Facebook: 'text-blue-600',
+  Twitter: 'text-black dark:text-white',
+  Instagram: 'text-pink-500',
+  YouTube: 'text-red-600',
+  Pinterest: 'text-red-700',
+  WhatsApp: 'text-green-500',
+  nextsosyal: 'text-purple-600',
+  NextSosyal: 'text-purple-600',
+};
+
+interface SocialIconsProps {
+    className?: string;
+    iconSize?: string;
+}
+
+export function SocialIcons({ className, iconSize = 'h-6 w-6' }: SocialIconsProps) {
+  const [socialLinks, setSocialLinks] = React.useState<SocialLink[]>([]);
+
+  React.useEffect(() => {
+    // Firebase'den sosyal medya linklerini yükle
+    getSocialLinksAction().then(setSocialLinks).catch(error => {
+      console.error('Failed to load social links:', error);
+    });
+  }, []);
+
+  return (
+    <div className={cn("flex items-center gap-1", className)}>
+      {socialLinks.filter(social => social.active).map((social: SocialLink) => {
+        const Icon = iconMap[social.name];
+        if (!Icon) return null;
+        // Use color from socialLinks.json if available, otherwise use colorMap
+        const iconColor = social.color || colorMap[social.name] || 'text-muted-foreground';
+        return (
+          <Button key={social.name} variant="ghost" size="icon" asChild className="hover:bg-transparent h-8 w-8 p-0">
+            <Link href={social.url} target="_blank" rel="noopener noreferrer">
+              <Icon className={cn(iconSize, iconColor, "transition-colors hover:opacity-80")} />
+              <span className="sr-only">{social.name}</span>
+            </Link>
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+    

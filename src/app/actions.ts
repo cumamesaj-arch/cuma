@@ -1229,8 +1229,8 @@ export async function loginAction(email: string, password: string): Promise<{
   }
 }
 
-// Reset password action
-export async function resetPasswordAction(email: string, newPassword: string): Promise<{ 
+// Request password reset (sends email with token)
+export async function requestPasswordResetAction(email: string): Promise<{ 
   success: boolean; 
   error?: string;
 }> {
@@ -1239,22 +1239,91 @@ export async function resetPasswordAction(email: string, newPassword: string): P
     const user = await getUserByEmail(email.toLowerCase(), false);
     
     if (!user) {
-      return { success: false, error: 'Bu email adresine kayıtlı kullanıcı bulunamadı.' };
+      // Güvenlik için: Kullanıcı yoksa da başarılı mesajı göster (email enumeration saldırısını önler)
+      return { success: true };
     }
     
     // Check if user is inactive
     if (!user.active) {
+      // Güvenlik için: Pasif kullanıcı için de başarılı mesajı göster
+      return { success: true };
+    }
+    
+    // Güvenli token oluştur
+    const crypto = await import('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Token'ı Firestore'a kaydet
+    const { createPasswordResetToken } = await import('@/lib/firestore/password-reset');
+    await createPasswordResetToken(email.toLowerCase(), token, 1); // 1 saat geçerli
+    
+    // Email gönder
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cumamesaj.net';
+    const resetUrl = `${siteUrl}/admin/reset-password?token=${token}`;
+    
+    const { sendPasswordResetEmail } = await import('@/lib/email');
+    const emailResult = await sendPasswordResetEmail(email, token, resetUrl);
+    
+    if (!emailResult.success) {
+      // Email gönderilemedi ama token oluşturuldu, kullanıcıya bilgi ver
+      console.error('Email gönderilemedi:', emailResult.error);
+      return { 
+        success: false, 
+        error: emailResult.error || 'Email gönderilemedi. Lütfen sistem yöneticisine başvurun.' 
+      };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: 'Şifre sıfırlama isteği oluşturulurken bir hata oluştu.' };
+  }
+}
+
+// Reset password with token
+export async function resetPasswordWithTokenAction(token: string, newPassword: string): Promise<{ 
+  success: boolean; 
+  error?: string;
+}> {
+  try {
+    // Token'ı kontrol et
+    const { getPasswordResetTokenByToken, markTokenAsUsed } = await import('@/lib/firestore/password-reset');
+    const resetToken = await getPasswordResetTokenByToken(token);
+    
+    if (!resetToken) {
+      return { success: false, error: 'Geçersiz veya süresi dolmuş token.' };
+    }
+    
+    // Kullanıcıyı getir
+    const user = await getUserByEmail(resetToken.email, false);
+    
+    if (!user) {
+      return { success: false, error: 'Kullanıcı bulunamadı.' };
+    }
+    
+    if (!user.active) {
       return { success: false, error: 'Bu kullanıcı hesabı pasif durumda.' };
+    }
+    
+    // Şifre validasyonu
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'Şifre en az 6 karakter olmalıdır.' };
     }
     
     // Yeni şifreyi hash'le ve güncelle
     const hashedPassword = hashPassword(newPassword);
     await updateUser(user.id, { password: hashedPassword });
     
+    // Token'ı kullanıldı olarak işaretle
+    await markTokenAsUsed(resetToken.id);
+    
     revalidatePath('/admin/login');
     return { success: true };
   } catch (error) {
-    console.error('Error resetting password:', error);
+    console.error('Error resetting password with token:', error);
     if (error instanceof Error) {
       return { success: false, error: error.message };
     }

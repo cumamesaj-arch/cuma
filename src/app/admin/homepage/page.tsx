@@ -2282,3 +2282,921 @@ export default function HomepagePage() {
   );
 }
 
+
+                              }}
+                              min={-100}
+                              max={100}
+                              step={1}
+                              className="w-full"
+                            />
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Üst (-100%)</span>
+                              <span>Merkez (0%)</span>
+                              <span>Alt (100%)</span>
+                            </div>
+                          </div>
+
+                          {/* Butonlar */}
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={async () => {
+                                // Görsel boyutlarını al
+                                const imgElement = document.createElement('img');
+                                imgElement.src = it.imageUrl;
+                                await new Promise((resolve, reject) => {
+                                  imgElement.onload = resolve;
+                                  imgElement.onerror = reject;
+                                });
+                                
+                                const containerWidth = 256; // Önizleme kutusu genişliği (h-64 = 256px)
+                                const containerHeight = 256; // Önizleme kutusu yüksekliği
+                                const imageWidth = imgElement.naturalWidth;
+                                const imageHeight = imgElement.naturalHeight;
+                                
+                                // Container'a sığacak zoom değerini hesapla
+                                const scaleX = containerWidth / imageWidth;
+                                const scaleY = containerHeight / imageHeight;
+                                const fitZoom = Math.min(scaleX, scaleY);
+                                
+                                setSections(prev => ({
+                                  ...prev,
+                                  hero: {
+                                    ...prev.hero,
+                                    page1Images: (prev.hero.page1Images||[]).map((img, i) => 
+                                      i === idx ? { ...img, zoom: fitZoom, panX: 0, panY: 0, objectPosition: 'center' } : img
+                                    )
+                                  }
+                                }));
+                              }}
+                            >
+                              Sığdır
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => {
+                                setSections(prev => ({
+                                  ...prev,
+                                  hero: {
+                                    ...prev.hero,
+                                    page1Images: (prev.hero.page1Images||[]).map((img, i) => 
+                                      i === idx ? { ...img, zoom: 1, panX: 0, panY: 0, objectPosition: 'center' } : img
+                                    )
+                                  }
+                                }));
+                              }}
+                            >
+                              Sıfırla
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={()=>setSections(prev=>({
+                          ...prev,
+                          hero:{...prev.hero, page1Images:(prev.hero.page1Images||[]).filter((_,i)=>i!==idx)}
+                        }))}
+                        aria-label="Görseli kaldır"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hero-title">Hero Başlığı</Label>
+                  <Input
+                    id="hero-title"
+                    value={sections.hero.title}
+                    onChange={(e) => updateHero('title', e.target.value)}
+                    placeholder="Ana başlık"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hero-description">Hero Açıklaması</Label>
+                  <Textarea
+                    id="hero-description"
+                    value={sections.hero.description}
+                    onChange={(e) => updateHero('description', e.target.value)}
+                    placeholder="Açıklama metni"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 border-t pt-6">
+                <h3 className="font-semibold">Sayfa 2: Rastgele Görseller</h3>
+                <div className="flex items-center gap-2">
+                  <Switch checked={!!sections.hero.page2Random?.enabled} onCheckedChange={(v)=>setSections(prev=>({...prev, hero:{...prev.hero, page2Random:{enabled:v, folderSlug: prev.hero.page2Random?.folderSlug || 'cuma-mesajlari'}}}))} />
+                  <Label>Aktif</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label>Kaynak Klasör (slug)</Label>
+                  <Input value={sections.hero.page2Random?.folderSlug || ''} onChange={(e)=>setSections(prev=>({...prev, hero:{...prev.hero, page2Random:{enabled: prev.hero.page2Random?.enabled ?? true, folderSlug: e.target.value}}}))} placeholder="cuma-mesajlari" />
+                </div>
+                <h3 className="font-semibold">Sayfa 3: Haftanın Mesajı</h3>
+                <div className="flex items-center gap-2">
+                  <Switch checked={!!sections.hero.page3Patient?.enabled} onCheckedChange={(v)=>setSections(prev=>({...prev, hero:{...prev.hero, page3Patient:{enabled:v, mode: prev.hero.page3Patient?.mode || 'text', text: prev.hero.page3Patient?.text || ''}}}))} />
+                  <Label>Aktif</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mod</Label>
+                  <Select value={sections.hero.page3Patient?.mode || 'text'} onValueChange={(val)=>setSections(prev=>({...prev, hero:{...prev.hero, page3Patient:{...prev.hero.page3Patient, mode: val as 'text'|'image', enabled: prev.hero.page3Patient?.enabled ?? true}}}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Mesaj (Metin)</SelectItem>
+                      <SelectItem value="image">Görsel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {sections.hero.page3Patient?.mode === 'text' ? (
+                  <div className="space-y-2">
+                  <Label>Haftanın Mesajı</Label>
+                    <Textarea value={sections.hero.page3Patient?.text || ''} onChange={(e)=>setSections(prev=>({...prev, hero:{...prev.hero, page3Patient:{...prev.hero.page3Patient, text: e.target.value}}}))} rows={3} />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Label>Görseller</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(sections.hero.page3Patient?.imageUrls || []).map((url, idx) => (
+                        <div key={idx} className="relative w-24 h-16 rounded overflow-hidden border">
+                          <Image src={url} alt="haftanin" fill className="object-cover" />
+                          <button
+                            type="button"
+                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-6 w-6"
+                            onClick={() => setSections(prev=>({
+                              ...prev,
+                              hero: {
+                                ...prev.hero,
+                                page3Patient: {
+                                  ...prev.hero.page3Patient,
+                                  imageUrls: (prev.hero.page3Patient?.imageUrls || []).filter((u)=>u!==url)
+                                }
+                              }
+                            }))}
+                            aria-label="Kaldır"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="outline">
+                          <Layout className="mr-2 h-4 w-4" />
+                          Galeriden Seç
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                          <DialogTitle>Görsel Seç (Bir veya Birden Fazla)</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[60vh] overflow-y-auto p-2">
+                          {PlaceHolderImages.map(image => {
+                            const selected = (sections.hero.page3Patient?.imageUrls || []).includes(image.imageUrl);
+                            return (
+                              <button
+                                key={image.id}
+                                type="button"
+                                onClick={() => setSections(prev=>({
+                                  ...prev,
+                                  hero: {
+                                    ...prev.hero,
+                                    page3Patient: {
+                                      ...prev.hero.page3Patient,
+                                      imageUrls: selected
+                                        ? (prev.hero.page3Patient?.imageUrls || []).filter(u=>u!==image.imageUrl)
+                                        : [...(prev.hero.page3Patient?.imageUrls || []), image.imageUrl]
+                                    }
+                                  }
+                                }))}
+                                className={`group relative focus:outline-none rounded-md border ${selected ? 'ring-2 ring-primary' : ''}`}
+                              >
+                                <Image src={image.imageUrl} alt={image.description} width={200} height={120} className="aspect-video w-full rounded-md object-cover" />
+                                {selected && <span className="absolute right-1 top-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">Seçili</span>}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <div className="flex justify-end p-4 pt-0">
+                          <DialogClose asChild>
+                            <Button type="button">Tamam</Button>
+                          </DialogClose>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+              </div>
+
+              {/* Yapay Zeka butonu ayarları kaldırıldı */}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Üst Bölüm */}
+        <TabsContent value="top" className="space-y-6">
+          {/* Ana Sayfada Gösterilecek Bölüm */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ana Sayfada Gösterilecek Bölüm</CardTitle>
+              <CardDescription>
+                Ana sayfa slayt altında gösterilecek bölümü ve ayarlarını düzenleyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={sections.topSection?.visible ?? true}
+                    onCheckedChange={(checked) => updateSection('topSection', 'visible', checked)}
+                  />
+                  <div>
+                    <Label className="font-medium">Ana Sayfada Göster</Label>
+                    <p className="text-sm text-muted-foreground">Kapalı olduğunda bu bölüm ana sayfada gösterilmez.</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Gösterilecek Bölüm</Label>
+                  <Select
+                    value={sections.topSection?.defaultDisplayMode || 
+                           sections.topSection?.buttons?.[0]?.defaultSection || 
+                           sections.topSection?.buttons?.[1]?.defaultSection || 
+                           'featured'}
+                    onValueChange={(value: 'latest' | 'featured' | 'random') => {
+                      // Seçilen bölüme göre ilgili butonun defaultSection'ını güncelle
+                      const buttons = sections.topSection?.buttons || [];
+                      const updatedButtons = buttons.map((btn, index) => {
+                        if (value === 'latest' && index === 0) {
+                          return { ...btn, defaultSection: 'latest' };
+                        } else if (value === 'featured' && index === 1) {
+                          return { ...btn, defaultSection: 'featured' };
+                        } else if (value === 'random' && index === 2) {
+                          return { ...btn, defaultSection: 'random' };
+                        }
+                        return btn;
+                      });
+                      // Eğer butonlar yoksa, oluştur
+                      if (updatedButtons.length === 0) {
+                        if (value === 'latest') {
+                          updatedButtons.push({ text: 'Son Gönderiler', link: '#featured', icon: 'History', visible: true, order: 1, defaultSection: 'latest' });
+                        } else if (value === 'featured') {
+                          updatedButtons.push({ text: 'Öne Çıkan Gönderiler', link: '#featured', icon: 'LayoutGrid', visible: true, order: 2, defaultSection: 'featured' });
+                        }
+                      }
+                      updateSection('topSection', 'defaultDisplayMode', value);
+                      if (updatedButtons.length > 0) {
+                        updateSection('topSection', 'buttons', updatedButtons);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.topSection?.buttons?.[0]?.text ? (
+                        <SelectItem value="latest">{sections.topSection.buttons[0].text}</SelectItem>
+                      ) : (
+                        <SelectItem value="latest">Son Gönderiler</SelectItem>
+                      )}
+                      {sections.topSection?.buttons?.[1]?.text ? (
+                        <SelectItem value="featured">{sections.topSection.buttons[1].text}</SelectItem>
+                      ) : (
+                        <SelectItem value="featured">Öne Çıkan Gönderiler</SelectItem>
+                      )}
+                      {sections.hero?.button1?.text ? (
+                        <SelectItem value="random">{sections.hero.button1.text}</SelectItem>
+                      ) : (
+                        <SelectItem value="random">Rastgele Mesajları Keşfet</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">Ana sayfa ilk açılışta gösterilecek bölümü seçin. Bu seçim, Butonlar Bölümü'ndeki butonlarla entegre çalışır.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Gösterilecek Gönderi Sayısı</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={sections.topSection?.postCount || 12}
+                      onChange={(e) => updateSection('topSection', 'postCount', parseInt(e.target.value) || 12)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Yerleşim (Sütun x Satır)</Label>
+                    <Select
+                      value={sections.topSection?.layout || '3x4'}
+                      onValueChange={(value) => updateSection('topSection', 'layout', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1x12">1x12 (1 sütun, 12 satır)</SelectItem>
+                        <SelectItem value="2x6">2x6 (2 sütun, 6 satır)</SelectItem>
+                        <SelectItem value="3x4">3x4 (3 sütun, 4 satır)</SelectItem>
+                        <SelectItem value="4x3">4x3 (4 sütun, 3 satır)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Sıralama Kriteri</Label>
+                    <Select
+                      value={sections.topSection?.sortBy || 'createdAt'}
+                      onValueChange={(value) => updateSection('topSection', 'sortBy', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt">Oluşturulma</SelectItem>
+                        <SelectItem value="title">Başlık</SelectItem>
+                        <SelectItem value="category">Kategori</SelectItem>
+                        <SelectItem value="number">Numara</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Sıralama</Label>
+                    <Select
+                      value={sections.topSection?.sortDirection || 'desc'}
+                      onValueChange={(value) => updateSection('topSection', 'sortDirection', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">Artan</SelectItem>
+                        <SelectItem value="desc">Azalan</SelectItem>
+                        <SelectItem value="random">Rastgele</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Butonlar Bölümü - Kutu İçinde */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Butonlar Bölümü</CardTitle>
+              <CardDescription>
+                Ana sayfada gösterilecek butonları düzenleyin. Satırda dizilim sırasına göre sıralanır.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Tüm butonları birleştir ve sırala */}
+              {[
+                { id: 'button1', label: 'Buton 1 - Son Gönderiler', button: sections.topSection.buttons?.[0] || { text: 'Son Gönderiler', link: '#featured', icon: 'History', visible: true, order: 1, defaultSection: 'latest' }, type: 'topSection' as const, index: 0 },
+                { id: 'button2', label: 'Buton 2 - Öne Çıkan Gönderiler', button: sections.topSection.buttons?.[1] || { text: 'Öne Çıkan Gönderiler', link: '#featured', icon: 'LayoutGrid', visible: true, order: 2, defaultSection: 'featured' }, type: 'topSection' as const, index: 1 },
+                { id: 'button3', label: 'Buton 3 - Rastgele Mesajları Keşfet', button: sections.hero.button1, type: 'hero' as const, heroKey: 'button1' },
+                { id: 'button4', label: 'Buton 4 - Yapay Zeka', button: sections.hero.button2, type: 'hero' as const, heroKey: 'button2' },
+              ]
+                .sort((a, b) => {
+                  const orderA = a.button.order ?? (a.id === 'button1' ? 1 : a.id === 'button2' ? 2 : a.id === 'button3' ? 3 : 4);
+                  const orderB = b.button.order ?? (b.id === 'button1' ? 1 : b.id === 'button2' ? 2 : b.id === 'button3' ? 3 : 4);
+                  return orderA - orderB;
+                })
+              .map((item, index) => (
+                <div key={item.id} className="space-y-4 p-4 border rounded-md">
+                  {item.id !== 'button4' && (
+                    <div className="-mb-2">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Hero Altı Liste: {item.id === 'button1' ? 'Son Gönderiler' : item.id === 'button2' ? 'Öne Çıkan Gönderiler' : 'Rastgele Mesajlar'}
+                      </span>
+                    </div>
+                  )}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">
+                          {index + 1}
+                        </div>
+                        <h4 className="font-medium">{item.label}</h4>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor={`showOnHomepage-${item.id}`} className="text-sm">Ana Sayfada Göster</Label>
+                          <Switch
+                            id={`showOnHomepage-${item.id}`}
+                            checked={item.button.showOnHomepage !== false}
+                            onCheckedChange={(checked) => {
+                              if (item.type === 'hero') {
+                                const buttonKey = (item as any).heroKey;
+                                updateHero(buttonKey, { ...item.button, showOnHomepage: checked });
+                              } else {
+                                const buttons = sections.topSection.buttons && sections.topSection.buttons.length > 0
+                                  ? [...sections.topSection.buttons]
+                                  : [];
+                                const buttonIndex = (item as any).index || 0;
+                                while (buttons.length <= buttonIndex) {
+                                  buttons.push({ text: '', link: '#featured', icon: 'LayoutGrid', visible: true, showOnHomepage: true });
+                                }
+                                buttons[buttonIndex] = { ...buttons[buttonIndex], showOnHomepage: checked };
+                                updateSection('topSection', 'buttons', buttons);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Buton Metni</Label>
+                        <Input
+                          value={item.button.text || ''}
+                          onChange={(e) => {
+                            if (item.type === 'hero') {
+                              const buttonKey = (item as any).heroKey;
+                              updateHero(buttonKey, { ...item.button, text: e.target.value });
+                            } else {
+                              const buttons = sections.topSection.buttons && sections.topSection.buttons.length > 0
+                                ? [...sections.topSection.buttons]
+                                : [];
+                              const buttonIndex = (item as any).index || 0;
+                              while (buttons.length <= buttonIndex) {
+                                buttons.push({ text: '', link: '#featured', icon: 'LayoutGrid', visible: true });
+                              }
+                              buttons[buttonIndex] = { ...buttons[buttonIndex], text: e.target.value };
+                              updateSection('topSection', 'buttons', buttons);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Buton Linki</Label>
+                        <Input
+                          value={item.button.link || ''}
+                          onChange={(e) => {
+                            if (item.type === 'hero') {
+                              const buttonKey = (item as any).heroKey;
+                              updateHero(buttonKey, { ...item.button, link: e.target.value });
+                            } else {
+                              const buttons = sections.topSection.buttons && sections.topSection.buttons.length > 0
+                                ? [...sections.topSection.buttons]
+                                : [];
+                              const buttonIndex = (item as any).index || 0;
+                              while (buttons.length <= buttonIndex) {
+                                buttons.push({ text: '', link: '#featured', icon: 'LayoutGrid', visible: true });
+                              }
+                              buttons[buttonIndex] = { ...buttons[buttonIndex], link: e.target.value };
+                              updateSection('topSection', 'buttons', buttons);
+                            }
+                          }}
+                          placeholder={item.id === 'button1' ? '#featured' : item.id === 'button2' ? '#featured' : item.id === 'button3' ? '#featured' : '/admin/ai-capabilities'}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Satırda Dizilim Sırası</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.button.order ?? (item.id === 'button1' ? 1 : item.id === 'button2' ? 2 : item.id === 'button3' ? 3 : 4)}
+                          onChange={(e) => {
+                            const order = parseInt(e.target.value) || 1;
+                            if (item.type === 'hero') {
+                              const buttonKey = (item as any).heroKey;
+                              updateHero(buttonKey, { ...item.button, order });
+                            } else {
+                              const buttons = sections.topSection.buttons && sections.topSection.buttons.length > 0
+                                ? [...sections.topSection.buttons]
+                                : [];
+                              const buttonIndex = (item as any).index || 0;
+                              while (buttons.length <= buttonIndex) {
+                                buttons.push({ text: '', link: '#featured', icon: 'LayoutGrid', visible: true });
+                              }
+                              buttons[buttonIndex] = { ...buttons[buttonIndex], order };
+                              updateSection('topSection', 'buttons', buttons);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {item.id === 'button4' && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Varyant</Label>
+                          <Select
+                            value={(sections as any).hero?.button2?.variant || 'secondary'}
+                            onValueChange={(value) => updateHero('button2', { ...sections.hero.button2, variant: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Buton stili" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="primary">Primary</SelectItem>
+                              <SelectItem value="secondary">Secondary</SelectItem>
+                              <SelectItem value="outline">Outline</SelectItem>
+                              <SelectItem value="ghost">Ghost</SelectItem>
+                              <SelectItem value="custom">Özel Renk</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Arkaplan Rengi</Label>
+                          <Input
+                            type="color"
+                            value={(sections as any).hero?.button2?.bgColor || '#111827'}
+                            onChange={(e) => updateHero('button2', { ...sections.hero.button2, bgColor: e.target.value, variant: 'custom' })}
+                            className="w-16 h-10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Yazı Rengi</Label>
+                          <Input
+                            type="color"
+                            value={(sections as any).hero?.button2?.textColor || '#ffffff'}
+                            onChange={(e) => updateHero('button2', { ...sections.hero.button2, textColor: e.target.value, variant: 'custom' })}
+                            className="w-16 h-10"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {item.id === 'button4' && (
+                      <div className="mt-2">
+                        <span className="text-sm text-muted-foreground">(Not: Bu buton sadece admin kullanıcılar tarafından görünür)</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
+
+        </TabsContent>
+
+        {/* Kategoriler Bölümü */}
+        <TabsContent value="categories" className="space-y-6">
+          <CategoriesSection 
+            sections={sections} 
+            setSections={setSections}
+          />
+        </TabsContent>
+
+        {/* Orta Bölüm */}
+        <TabsContent value="middle" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Orta Bölüm - Ziyaretçi Mesaj Kutusu</CardTitle>
+              <CardDescription>
+                Ana sayfanın alt kısmındaki ziyaretçi mesaj formu bölümünü düzenleyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="middle-title">Başlık</Label>
+                <Input
+                  id="middle-title"
+                  value={sections.middleSection.title}
+                  onChange={(e) => updateSection('middleSection', 'title', e.target.value)}
+                  placeholder="Bölüm başlığı"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="middle-description">Açıklama</Label>
+                <Textarea
+                  id="middle-description"
+                  value={sections.middleSection.description || ''}
+                  onChange={(e) => updateSection('middleSection', 'description', e.target.value)}
+                  placeholder="Bölüm açıklaması"
+                  rows={2}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={sections.middleSection.visible}
+                  onCheckedChange={(checked) => updateSection('middleSection', 'visible', checked)}
+                />
+                <Label>Bu Bölümü Göster</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Alt Bölüm */}
+        <TabsContent value="bottom" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Alt Bölüm</CardTitle>
+              <CardDescription>
+                Ana sayfanın en alt kısmındaki ekstra içerik bölümünü düzenleyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="bottom-title">Başlık</Label>
+                <Input
+                  id="bottom-title"
+                  value={sections.bottomSection.title}
+                  onChange={(e) => updateSection('bottomSection', 'title', e.target.value)}
+                  placeholder="Bölüm başlığı"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bottom-description">Açıklama</Label>
+                <Textarea
+                  id="bottom-description"
+                  value={sections.bottomSection.description || ''}
+                  onChange={(e) => updateSection('bottomSection', 'description', e.target.value)}
+                  placeholder="Bölüm açıklaması"
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={sections.bottomSection.visible}
+                  onCheckedChange={(checked) => updateSection('bottomSection', 'visible', checked)}
+                />
+                <Label>Bu Bölümü Göster</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Analiz Ayarları */}
+        <TabsContent value="analytics" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Analiz Ayarları</CardTitle>
+              <CardDescription>Ana sayfadaki analiz kutusunun görünümünü ve içeriğini özelleştirin.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="analytics-title">Başlık</Label>
+                <Input
+                  id="analytics-title"
+                  value={sections.analytics?.title || 'Analiz'}
+                  onChange={(e) => setSections(prev => ({
+                    ...prev,
+                    analytics: {
+                      ...prev.analytics || {
+                        title: 'Analiz',
+                        visible: true,
+                        showPublished: true,
+                        showDraft: true,
+                        showTotal: true,
+                      },
+                      title: e.target.value
+                    }
+                  }))}
+                  placeholder="Analiz"
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={sections.analytics?.visible ?? true}
+                    onCheckedChange={(checked) => setSections(prev => ({
+                      ...prev,
+                      analytics: {
+                        ...prev.analytics || {
+                          title: 'Analiz',
+                          visible: true,
+                          showPublished: true,
+                          showDraft: true,
+                          showTotal: true,
+                        },
+                        visible: checked
+                      }
+                    }))}
+                  />
+                  <Label>Analiz Kutusunu Göster</Label>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-medium">Gösterilecek İstatistikler</h3>
+                
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={sections.analytics?.showTotal ?? true}
+                    onCheckedChange={(checked) => setSections(prev => ({
+                      ...prev,
+                      analytics: {
+                        ...prev.analytics || {
+                          title: 'Analiz',
+                          visible: true,
+                          showPublished: true,
+                          showDraft: true,
+                          showTotal: true,
+                          googleAnalytics: { enabled: false, measurementId: '' },
+                          yandexMetrica: { enabled: false, counterId: '' },
+                        },
+                        showTotal: checked
+                      }
+                    }))}
+                  />
+                  <Label>Toplam Gönderi Sayısını Göster</Label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={sections.analytics?.showPublished ?? true}
+                    onCheckedChange={(checked) => setSections(prev => ({
+                      ...prev,
+                      analytics: {
+                        ...prev.analytics || {
+                          title: 'Analiz',
+                          visible: true,
+                          showPublished: true,
+                          showDraft: true,
+                          showTotal: true,
+                          googleAnalytics: { enabled: false, measurementId: '' },
+                          yandexMetrica: { enabled: false, counterId: '' },
+                        },
+                        showPublished: checked
+                      }
+                    }))}
+                  />
+                  <Label>Yayında Olan Gönderi Sayısını Göster</Label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={sections.analytics?.showDraft ?? true}
+                    onCheckedChange={(checked) => setSections(prev => ({
+                      ...prev,
+                      analytics: {
+                        ...prev.analytics || {
+                          title: 'Analiz',
+                          visible: true,
+                          showPublished: true,
+                          showDraft: true,
+                          showTotal: true,
+                          googleAnalytics: { enabled: false, measurementId: '' },
+                          yandexMetrica: { enabled: false, counterId: '' },
+                        },
+                        showDraft: checked
+                      }
+                    }))}
+                  />
+                  <Label>Taslak Gönderi Sayısını Göster</Label>
+                </div>
+              </div>
+
+              <div className="space-y-6 pt-6 border-t">
+                <h3 className="text-sm font-medium">Ziyaretçi Analizleri</h3>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Google Analytics</CardTitle>
+                    <CardDescription>Google Analytics 4 (GA4) entegrasyonu</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={sections.analytics?.googleAnalytics?.enabled ?? false}
+                        onCheckedChange={(checked) => setSections(prev => ({
+                          ...prev,
+                          analytics: {
+                            ...prev.analytics || {
+                              title: 'Analiz',
+                              visible: true,
+                              showPublished: true,
+                              showDraft: true,
+                              showTotal: true,
+                              googleAnalytics: { enabled: false, measurementId: '' },
+                              yandexMetrica: { enabled: false, counterId: '' },
+                            },
+                            googleAnalytics: {
+                              enabled: checked,
+                              measurementId: prev.analytics?.googleAnalytics?.measurementId || '',
+                            }
+                          }
+                        }))}
+                      />
+                      <Label>Google Analytics'i Etkinleştir</Label>
+                    </div>
+
+                    {sections.analytics?.googleAnalytics?.enabled && (
+                      <div className="space-y-2">
+                        <Label htmlFor="ga-measurement-id">Measurement ID (G-XXXXXXXXXX)</Label>
+                        <Input
+                          id="ga-measurement-id"
+                          value={sections.analytics?.googleAnalytics?.measurementId || ''}
+                          onChange={(e) => setSections(prev => ({
+                            ...prev,
+                            analytics: {
+                              ...prev.analytics || {
+                                title: 'Analiz',
+                                visible: true,
+                                showPublished: true,
+                                showDraft: true,
+                                showTotal: true,
+                                googleAnalytics: { enabled: false, measurementId: '' },
+                                yandexMetrica: { enabled: false, counterId: '' },
+                              },
+                              googleAnalytics: {
+                                enabled: prev.analytics?.googleAnalytics?.enabled ?? false,
+                                measurementId: e.target.value,
+                              }
+                            }
+                          }))}
+                          placeholder="G-XXXXXXXXXX"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Google Analytics hesabınızdan alacağınız Measurement ID (G ile başlayan ID)
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Yandex Metrica</CardTitle>
+                    <CardDescription>Yandex Metrica entegrasyonu</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={sections.analytics?.yandexMetrica?.enabled ?? false}
+                        onCheckedChange={(checked) => setSections(prev => ({
+                          ...prev,
+                          analytics: {
+                            ...prev.analytics || {
+                              title: 'Analiz',
+                              visible: true,
+                              showPublished: true,
+                              showDraft: true,
+                              showTotal: true,
+                              googleAnalytics: { enabled: false, measurementId: '' },
+                              yandexMetrica: { enabled: false, counterId: '' },
+                            },
+                            yandexMetrica: {
+                              enabled: checked,
+                              counterId: prev.analytics?.yandexMetrica?.counterId || '',
+                            }
+                          }
+                        }))}
+                      />
+                      <Label>Yandex Metrica'yı Etkinleştir</Label>
+                    </div>
+
+                    {sections.analytics?.yandexMetrica?.enabled && (
+                      <div className="space-y-2">
+                        <Label htmlFor="ym-counter-id">Counter ID</Label>
+                        <Input
+                          id="ym-counter-id"
+                          type="number"
+                          value={sections.analytics?.yandexMetrica?.counterId || ''}
+                          onChange={(e) => setSections(prev => ({
+                            ...prev,
+                            analytics: {
+                              ...prev.analytics || {
+                                title: 'Analiz',
+                                visible: true,
+                                showPublished: true,
+                                showDraft: true,
+                                showTotal: true,
+                                googleAnalytics: { enabled: false, measurementId: '' },
+                                yandexMetrica: { enabled: false, counterId: '' },
+                              },
+                              yandexMetrica: {
+                                enabled: prev.analytics?.yandexMetrica?.enabled ?? false,
+                                counterId: e.target.value,
+                              }
+                            }
+                          }))}
+                          placeholder="12345678"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Yandex Metrica hesabınızdan alacağınız Counter ID (sadece rakamlar)
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </form>
+  );
+}
+

@@ -270,3 +270,76 @@ export const getHomepageSections = (): HomepageSections => {
 
 export default defaultSections;
 
+
+    postCount: 10,
+    layout: '3x4', // Default: 3 columns, 4 rows
+    sortBy: 'createdAt',
+    sortDirection: 'desc',
+    buttons: [
+      { text: 'Öne Çıkan Gönderiler', link: '#featured', icon: 'LayoutGrid', visible: true },
+    ]
+  },
+  middleSection: {
+    title: "Ziyaretçi Not Mesaj Kutusu",
+    description: "Bize bir mesaj bırakın.",
+    visible: true
+  },
+  bottomSection: {
+    title: "",
+    description: "",
+    visible: true
+  },
+  announcement: {
+    enabled: false,
+    message: "Hoş geldiniz! Cuma'nız mübarek olsun.",
+    durationMs: 8000,
+    position: 'top-right',
+    bgColor: '#111827',
+    textColor: '#ffffff'
+  },
+  footer: {
+    title: 'Sosyal Medya Linklerim',
+    text: 'Tüm hakları saklıdır.',
+    showYear: true,
+    showSocials: true,
+  },
+  analytics: {
+    title: 'Analiz',
+    visible: true,
+    showTotal: true,
+    showPublished: true,
+    showDraft: true,
+    googleAnalytics: {
+      enabled: false,
+      measurementId: '',
+    },
+    yandexMetrica: {
+      enabled: false,
+      counterId: '',
+    },
+  }
+};
+
+// Server-side: Load from Firebase
+export async function loadHomepageSections(): Promise<HomepageSections> {
+  if (typeof window === 'undefined') {
+    // Server-side: read from Firebase
+    try {
+      const { getHomepageSections } = await import('@/lib/firestore');
+      const sections = await getHomepageSections();
+      return sections || defaultSections;
+    } catch (error) {
+      console.error('Error loading homepage sections from Firebase:', error);
+      return defaultSections;
+    }
+  }
+  // Client-side: return default
+  return defaultSections;
+}
+
+export const getHomepageSections = (): HomepageSections => {
+  return defaultSections;
+};
+
+export default defaultSections;
+
