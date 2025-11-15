@@ -78,8 +78,8 @@ export default function ResetPasswordPage() {
       
       if (result.success) {
         toast({
-          title: 'Şifre Başarıyla Sıfırlandı!',
-          description: 'Yeni şifrenizle giriş yapabilirsiniz.',
+          title: 'Şifre Başarıyla Sıfırlandı! ✅',
+          description: 'Yeni şifreniz kaydedildi. Giriş sayfasına yönlendiriliyorsunuz...',
         });
         
         setTimeout(() => {
@@ -88,8 +88,8 @@ export default function ResetPasswordPage() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Şifre Sıfırlama Başarısız!',
-          description: result.error || 'Şifre sıfırlanırken bir hata oluştu.',
+          title: 'Şifre Sıfırlama Başarısız! ❌',
+          description: result.error || 'Şifre sıfırlanırken bir hata oluştu. Lütfen tekrar deneyin veya yeni bir şifre sıfırlama linki isteyin.',
         });
       }
     });
@@ -105,7 +105,7 @@ export default function ResetPasswordPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Yeni Şifre Belirle</CardTitle>
           <CardDescription className="text-center">
-            Yeni şifrenizi belirleyin (en az 6 karakter)
+            Email adresinize gönderilen link ile bu sayfaya geldiniz. Yeni şifrenizi belirleyin (en az 6 karakter).
           </CardDescription>
         </CardHeader>
         <CardContent>

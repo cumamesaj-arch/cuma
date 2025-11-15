@@ -128,8 +128,8 @@ export default function LoginPage() {
       
       if (result.success) {
         toast({
-          title: 'Email Gönderildi!',
-          description: 'Şifre sıfırlama linki email adresinize gönderildi. Lütfen email kutunuzu kontrol edin.',
+          title: 'Email Gönderildi! ✅',
+          description: `Şifre sıfırlama linki ${resetEmail} adresine gönderildi. Email kutunuzu kontrol edin ve linke tıklayarak yeni şifrenizi belirleyin.`,
         });
         
         // Reset form and close dialog
@@ -138,8 +138,8 @@ export default function LoginPage() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Email Gönderilemedi!',
-          description: result.error || 'Email gönderilirken bir hata oluştu.',
+          title: 'Email Gönderilemedi! ❌',
+          description: result.error || 'Email gönderilirken bir hata oluştu. Lütfen tekrar deneyin veya sistem yöneticisine başvurun.',
         });
       }
     });
