@@ -1164,50 +1164,40 @@ export async function loginAction(email: string, password: string): Promise<{
   user?: { id: string; name: string; email: string; role: string } 
 }> {
   try {
+    console.log('🔐 Giriş denemesi:', { email: email.toLowerCase() });
+    
     // Firebase'den email ile kullanıcıyı getir (şifre dahil)
     let user = await getUserByEmail(email.toLowerCase(), true);
 
-    // If user not found, create a new viewer user automatically
+    // Kullanıcı bulunamadıysa hata döndür (otomatik kullanıcı oluşturma kaldırıldı)
     if (!user) {
-      // Hash the password
-      const hashedPassword = hashPassword(password);
-      
-      // Extract name from email (part before @)
-      const nameFromEmail = email.split('@')[0];
-      
-      // Create new viewer user
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        name: nameFromEmail,
-        email: email.toLowerCase(),
-        role: 'viewer', // Default role for non-registered users
-        password: hashedPassword,
-        active: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Firebase'e yeni kullanıcıyı ekle
-      const createdUser = await createUser(newUser);
-      
-      // Use the newly created user (password olmadan)
-      user = createdUser;
-    } else {
-      // Check if user is inactive
-      if (!user.active) {
-        return { success: false, error: 'Bu kullanıcı hesabı pasif durumda.' };
-      }
-      
-      // User exists, verify password
-      if (!user.password) {
-        return { success: false, error: 'Kullanıcı şifresi bulunamadı.' };
-      }
-
-      const isValid = verifyPassword(password, user.password);
-      
-      if (!isValid) {
-        return { success: false, error: 'Email veya şifre hatalı.' };
-      }
+      console.error('❌ Kullanıcı bulunamadı:', email.toLowerCase());
+      return { success: false, error: 'Email veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.' };
     }
+    
+    console.log('✅ Kullanıcı bulundu:', { id: user.id, name: user.name, active: user.active });
+    
+    // Check if user is inactive
+    if (!user.active) {
+      console.error('❌ Kullanıcı pasif durumda:', user.id);
+      return { success: false, error: 'Bu kullanıcı hesabı pasif durumda. Lütfen sistem yöneticisine başvurun.' };
+    }
+    
+    // User exists, verify password
+    if (!user.password) {
+      console.error('❌ Kullanıcı şifresi bulunamadı:', user.id);
+      return { success: false, error: 'Kullanıcı şifresi bulunamadı. Lütfen "Şifremi Unuttum" özelliğini kullanın.' };
+    }
+
+    console.log('🔍 Şifre kontrol ediliyor...');
+    const isValid = verifyPassword(password, user.password);
+    
+    if (!isValid) {
+      console.error('❌ Şifre hatalı:', user.id);
+      return { success: false, error: 'Email veya şifre hatalı. Lütfen bilgilerinizi kontrol edin veya "Şifremi Unuttum" özelliğini kullanın.' };
+    }
+    
+    console.log('✅ Giriş başarılı:', user.id);
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user;
