@@ -4,6 +4,9 @@ import { getCategoriesAction, getCustomMenusAction } from '@/app/actions';
 import { getCategoriesData } from '@/lib/firestore';
 import { CategoryContent } from './category-content';
 
+// Enable dynamic params for runtime route generation
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   try {
     const categories = await getCategoriesData();
@@ -31,10 +34,16 @@ export async function generateStaticParams() {
       }
     });
     
+    // Always include common routes
+    if (!params.find(p => p.category === 'cuma-mesajlari')) {
+      params.push({ category: 'cuma-mesajlari' });
+    }
+    
     return params;
   } catch (error) {
     console.error('Error generating static params for categories:', error);
-    return [];
+    // Return at least common routes even if Firebase fails
+    return [{ category: 'cuma-mesajlari' }];
   }
 }
 
