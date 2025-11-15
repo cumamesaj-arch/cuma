@@ -6,6 +6,8 @@ import { CategoryContent } from './category-content';
 
 // Enable dynamic params for runtime route generation
 export const dynamicParams = true;
+// Force dynamic rendering to ensure routes are available at runtime
+export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   try {
