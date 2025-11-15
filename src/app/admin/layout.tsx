@@ -18,10 +18,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
         const isAuth = Boolean(ls || ss || cookie);
         
-        setIsAuthenticated(isAuth);
+        // Also check if user info exists
+        const adminUserStr = typeof window !== 'undefined' && localStorage.getItem('adminUser');
+        const hasUserInfo = Boolean(adminUserStr);
+        
+        setIsAuthenticated(isAuth && hasUserInfo);
         
         // If not authenticated and not on login/quick-access page, redirect to login
-        if (!isAuth && pathname !== '/admin/login' && pathname !== '/admin/quick-access') {
+        if ((!isAuth || !hasUserInfo) && pathname !== '/admin/login' && pathname !== '/admin/quick-access') {
           router.push('/admin/login');
         }
       } catch {

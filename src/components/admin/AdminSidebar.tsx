@@ -79,17 +79,59 @@ const NavLink = ({
 };
 
 export function AdminSidebar() {
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<'admin' | 'editor' | 'viewer' | null>(null);
+  
   React.useEffect(() => {
     try {
-      const refFromAdmin = typeof document !== 'undefined' && document.referrer.includes('/admin');
-      const ls = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
-      const ss = typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true';
-      const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
-      setIsAdmin(Boolean(refFromAdmin || ls || ss || cookie));
-    } catch {}
+      // Load user role from localStorage
+      const adminUserStr = typeof window !== 'undefined' && localStorage.getItem('adminUser');
+      if (adminUserStr) {
+        const adminUser = JSON.parse(adminUserStr);
+        setUserRole(adminUser.role || 'viewer');
+      } else {
+        // Fallback: check if admin flag exists
+        const ls = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
+        const ss = typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true';
+        const cookie = typeof document !== 'undefined' && document.cookie.split(';').some(c => c.trim().startsWith('isAdmin=true'));
+        if (ls || ss || cookie) {
+          setUserRole('admin'); // Default to admin if no user info but admin flag exists
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user role:', error);
+    }
   }, []);
-  const visibleItems = navItems.filter(item => item.href !== '/admin/ai-capabilities' || isAdmin);
+
+  // Filter menu items based on user role
+  const visibleItems = React.useMemo(() => {
+    if (!userRole) return [];
+    
+    return navItems.filter(item => {
+      // Admin: can see everything
+      if (userRole === 'admin') {
+        return true;
+      }
+      
+      // Editor: can see most things except user management
+      if (userRole === 'editor') {
+        return item.href !== '/admin/users' && item.href !== '/admin/ai-capabilities';
+      }
+      
+      // Viewer: can only see read-only pages
+      if (userRole === 'viewer') {
+        return [
+          '/admin',
+          '/admin/posts',
+          '/admin/media',
+          '/admin/analytics',
+          '/admin/messages',
+          '/admin/notes',
+        ].includes(item.href);
+      }
+      
+      return false;
+    });
+  }, [userRole]);
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">

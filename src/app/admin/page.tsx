@@ -122,6 +122,23 @@ export default function Dashboard() {
   const [categorySettings, setCategorySettings] = useState<CategorySettings[]>([]);
   const [customMenus, setCustomMenus] = useState<CustomMenu[]>([]);
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(null);
+
+  // Load current user from localStorage
+  useEffect(() => {
+    try {
+      const adminUserStr = typeof window !== 'undefined' && localStorage.getItem('adminUser');
+      if (adminUserStr) {
+        const adminUser = JSON.parse(adminUserStr);
+        setCurrentUser({
+          name: adminUser.name || 'Kullanıcı',
+          email: adminUser.email || '',
+          role: adminUser.role || 'viewer',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading current user:', error);
+    }
+  }, []);
   const normalizeSlug = (value?: string) => String(value || '')
     .trim()
     .replace(/^\//, '')

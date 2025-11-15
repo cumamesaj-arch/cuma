@@ -46,7 +46,13 @@ export default function QuickAccessPage() {
           expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000);
           document.cookie = `isAdmin=true; expires=${expires.toUTCString()}; path=/`;
           // Store user info
-          localStorage.setItem('adminUser', JSON.stringify(result.user));
+          // Store full user info including role
+          localStorage.setItem('adminUser', JSON.stringify({
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.role || 'viewer',
+          }));
         }
         
         toast({
