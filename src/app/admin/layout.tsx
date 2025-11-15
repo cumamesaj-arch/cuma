@@ -20,13 +20,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         
         setIsAuthenticated(isAuth);
         
-        // If not authenticated and not on login page, redirect to login
-        if (!isAuth && pathname !== '/admin/login') {
+        // If not authenticated and not on login/quick-access page, redirect to login
+        if (!isAuth && pathname !== '/admin/login' && pathname !== '/admin/quick-access') {
           router.push('/admin/login');
         }
       } catch {
         setIsAuthenticated(false);
-        if (pathname !== '/admin/login') {
+        if (pathname !== '/admin/login' && pathname !== '/admin/quick-access') {
           router.push('/admin/login');
         }
       }
@@ -44,8 +44,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // If on login page, don't show sidebar
-  if (pathname === '/admin/login') {
+  // If on login page or quick-access page, don't show sidebar
+  if (pathname === '/admin/login' || pathname === '/admin/quick-access') {
     return <>{children}</>;
   }
 
