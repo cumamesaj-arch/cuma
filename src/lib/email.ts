@@ -35,22 +35,31 @@ export async function sendPasswordResetEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Email ayarları yoksa hata döndür
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPassword = process.env.EMAIL_PASSWORD;
+    const emailService = process.env.EMAIL_SERVICE || 'gmail';
+    
+    console.log('📧 Email gönderme denemesi:', {
+      to,
+      emailUser: emailUser ? `${emailUser.substring(0, 3)}***` : 'YOK',
+      emailPassword: emailPassword ? '***' : 'YOK',
+      emailService,
+    });
+    
+    if (!emailUser || !emailPassword) {
       const missingVars = [];
-      if (!process.env.EMAIL_USER) missingVars.push('EMAIL_USER');
-      if (!process.env.EMAIL_PASSWORD) missingVars.push('EMAIL_PASSWORD');
+      if (!emailUser) missingVars.push('EMAIL_USER');
+      if (!emailPassword) missingVars.push('EMAIL_PASSWORD');
       
-      console.error('❌ Email servisi yapılandırılmamış!');
-      console.error(`Eksik environment variables: ${missingVars.join(', ')}`);
-      console.error('Lütfen Firebase Console > App Hosting > Backend > Environment\'tan bu değişkenleri ekleyin.');
+      console.error('❌ Email servisi yapılandırılmamış. Eksik environment variables:', missingVars.join(', '));
+      console.error('💡 Firebase Console > App Hosting > Backend > Environment > Secrets bölümünden ekleyin.');
       
       return { 
         success: false, 
-        error: `Email servisi yapılandırılmamış. Eksik: ${missingVars.join(', ')}. Lütfen Firebase Console'dan ekleyin.` 
+        error: `Email servisi yapılandırılmamış. Eksik: ${missingVars.join(', ')}. Lütfen Firebase Console'dan Secret Manager'a ekleyin.` 
       };
     }
 
-    console.log('📧 Email gönderiliyor...', { to, service: process.env.EMAIL_SERVICE || 'gmail' });
     const transporter = createTransporter();
     
     const mailOptions = {
@@ -120,27 +129,31 @@ Bu email otomatik olarak gönderilmiştir. Lütfen yanıtlamayın.
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    console.log('📤 Email gönderiliyor...', { to, from: mailOptions.from });
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Email başarıyla gönderildi!', { messageId: result.messageId });
     
-    console.log('✅ Email başarıyla gönderildi!', { to });
     return { success: true };
   } catch (error) {
     console.error('❌ Email gönderme hatası:', error);
+    
+    // Daha detaylı hata mesajı
+    let errorMessage = 'Email gönderilirken bir hata oluştu.';
+    
     if (error instanceof Error) {
-      // Daha açıklayıcı hata mesajları
-      let errorMessage = error.message;
+      errorMessage = error.message;
       
-      if (errorMessage.includes('Invalid login')) {
-        errorMessage = 'Email kullanıcı adı veya şifresi hatalı. Gmail App Password kullanıldığından emin olun.';
-      } else if (errorMessage.includes('ECONNECTION')) {
+      // Gmail özel hataları
+      if (error.message.includes('Invalid login')) {
+        errorMessage = 'Gmail giriş bilgileri hatalı. EMAIL_USER ve EMAIL_PASSWORD kontrol edin.';
+      } else if (error.message.includes('OAuth2')) {
+        errorMessage = 'Gmail OAuth2 hatası. Gmail App Password kullanmanız gerekebilir.';
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('ETIMEDOUT')) {
         errorMessage = 'SMTP sunucusuna bağlanılamadı. İnternet bağlantınızı kontrol edin.';
-      } else if (errorMessage.includes('EAUTH')) {
-        errorMessage = 'Email kimlik doğrulama hatası. EMAIL_USER ve EMAIL_PASSWORD değerlerini kontrol edin.';
       }
-      
-      return { success: false, error: errorMessage };
     }
-    return { success: false, error: 'Email gönderilirken bir hata oluştu.' };
+    
+    return { success: false, error: errorMessage };
   }
 }
 
