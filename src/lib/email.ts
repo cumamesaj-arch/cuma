@@ -36,13 +36,21 @@ export async function sendPasswordResetEmail(
   try {
     // Email ayarları yoksa hata döndür
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.warn('⚠️  Email servisi yapılandırılmamış. EMAIL_USER ve EMAIL_PASSWORD environment variables gerekli.');
+      const missingVars = [];
+      if (!process.env.EMAIL_USER) missingVars.push('EMAIL_USER');
+      if (!process.env.EMAIL_PASSWORD) missingVars.push('EMAIL_PASSWORD');
+      
+      console.error('❌ Email servisi yapılandırılmamış!');
+      console.error(`Eksik environment variables: ${missingVars.join(', ')}`);
+      console.error('Lütfen Firebase Console > App Hosting > Backend > Environment\'tan bu değişkenleri ekleyin.');
+      
       return { 
         success: false, 
-        error: 'Email servisi yapılandırılmamış. Lütfen sistem yöneticisine başvurun.' 
+        error: `Email servisi yapılandırılmamış. Eksik: ${missingVars.join(', ')}. Lütfen Firebase Console'dan ekleyin.` 
       };
     }
 
+    console.log('📧 Email gönderiliyor...', { to, service: process.env.EMAIL_SERVICE || 'gmail' });
     const transporter = createTransporter();
     
     const mailOptions = {
@@ -114,11 +122,23 @@ Bu email otomatik olarak gönderilmiştir. Lütfen yanıtlamayın.
 
     await transporter.sendMail(mailOptions);
     
+    console.log('✅ Email başarıyla gönderildi!', { to });
     return { success: true };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error('❌ Email gönderme hatası:', error);
     if (error instanceof Error) {
-      return { success: false, error: error.message };
+      // Daha açıklayıcı hata mesajları
+      let errorMessage = error.message;
+      
+      if (errorMessage.includes('Invalid login')) {
+        errorMessage = 'Email kullanıcı adı veya şifresi hatalı. Gmail App Password kullanıldığından emin olun.';
+      } else if (errorMessage.includes('ECONNECTION')) {
+        errorMessage = 'SMTP sunucusuna bağlanılamadı. İnternet bağlantınızı kontrol edin.';
+      } else if (errorMessage.includes('EAUTH')) {
+        errorMessage = 'Email kimlik doğrulama hatası. EMAIL_USER ve EMAIL_PASSWORD değerlerini kontrol edin.';
+      }
+      
+      return { success: false, error: errorMessage };
     }
     return { success: false, error: 'Email gönderilirken bir hata oluştu.' };
   }
