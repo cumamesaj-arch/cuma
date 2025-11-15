@@ -95,32 +95,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
-        hostname: 'i.ytimg.com',
-        port: '',
-        pathname: '/**',
-      },
-      // Firebase Storage için
-      {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  // Firebase Studio için optimize edilmiş yapılandırma
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '25mb',
-    },
-  },
-};
-
-export default nextConfig;
