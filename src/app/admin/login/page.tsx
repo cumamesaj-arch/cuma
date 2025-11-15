@@ -30,6 +30,52 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = React.useState('');
   const [isRequestingReset, startResetTransition] = useTransition();
 
+  // Şifre sıfırlama isteği - sadece email ile
+  const handleRequestPasswordReset = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!resetEmail || !resetEmail.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Eksik Bilgi',
+        description: 'Lütfen email adresinizi girin.',
+      });
+      return;
+    }
+    
+    // Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast({
+        variant: 'destructive',
+        title: 'Geçersiz Email',
+        description: 'Lütfen geçerli bir email adresi girin.',
+      });
+      return;
+    }
+    
+    startResetTransition(async () => {
+      const result = await requestPasswordResetAction(resetEmail.trim().toLowerCase());
+      
+      if (result.success) {
+        toast({
+          title: 'Email Gönderildi! ✅',
+          description: `Şifre sıfırlama linki ${resetEmail} adresine gönderildi. Email kutunuzu kontrol edin ve linke tıklayarak yeni şifrenizi belirleyin.`,
+        });
+        
+        // Reset form and close dialog
+        setResetEmail('');
+        setShowForgotPassword(false);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Email Gönderilemedi! ❌',
+          description: result.error || 'Email gönderilirken bir hata oluştu. Lütfen tekrar deneyin veya sistem yöneticisine başvurun.',
+        });
+      }
+    });
+  };
+
   // Check if already logged in - with delay to prevent flash
   React.useEffect(() => {
     const checkAuth = () => {
@@ -111,39 +157,6 @@ export default function LoginPage() {
     });
   };
 
-  const handleRequestPasswordReset = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!resetEmail) {
-      toast({
-        variant: 'destructive',
-        title: 'Eksik Bilgi',
-        description: 'Lütfen email adresinizi girin.',
-      });
-      return;
-    }
-    
-    startResetTransition(async () => {
-      const result = await requestPasswordResetAction(resetEmail);
-      
-      if (result.success) {
-        toast({
-          title: 'Email Gönderildi! ✅',
-          description: `Şifre sıfırlama linki ${resetEmail} adresine gönderildi. Email kutunuzu kontrol edin ve linke tıklayarak yeni şifrenizi belirleyin.`,
-        });
-        
-        // Reset form and close dialog
-        setResetEmail('');
-        setShowForgotPassword(false);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Email Gönderilemedi! ❌',
-          description: result.error || 'Email gönderilirken bir hata oluştu. Lütfen tekrar deneyin veya sistem yöneticisine başvurun.',
-        });
-      }
-    });
-  };
 
   // Show loading state while checking authentication
   if (isCheckingAuth) {
@@ -235,13 +248,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
       
-      {/* Forgot Password Dialog */}
+      {/* Şifremi Unuttum Dialog - Sadece Email */}
       <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Şifremi Unuttum</DialogTitle>
             <DialogDescription>
-              Email adresinizi girin, size şifre sıfırlama linki gönderelim.
+              Kayıtlı email adresinizi girin, size şifre sıfırlama linki gönderelim.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleRequestPasswordReset} className="space-y-4">
@@ -263,7 +276,7 @@ export default function LoginPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Email adresinize şifre sıfırlama linki gönderilecektir.
+                Kayıtlı email adresinize şifre sıfırlama linki gönderilecektir. Linke tıklayarak yeni şifrenizi belirleyebilirsiniz.
               </p>
             </div>
             <div className="flex gap-2">
